@@ -10,7 +10,9 @@ class App {
         console.log("App started");
         var temp = new MyElement("my-element", "div", "Hello World", {}, {});
 
-        document.body.appendChild(temp.generateElement());
+        temp.generateElement("#main");
+
+        temp.makeRed()
 
     }
 }

@@ -8,25 +8,39 @@ class MyElement {
     attributes: StringDict;
     styling: StringDict;
 
-    generateElement(): HTMLElement {
-        let element = document.createElement(this.type);
-        element.id = this.id;
+    private element: HTMLElement;
+
+    generateElement(location?: string): HTMLElement {
+
+        this.element = document.createElement(this.type);
+        this.element.id = this.id;
         // check if content is String or MyElement
         if (typeof this.content === "string") {
-            element.innerHTML = this.content;
+            this.element.innerHTML = this.content;
         } else {
-            element.appendChild(this.content.generateElement());
+            this.element.appendChild(this.content.generateElement());
         }
         // add attributes
         for (let key in this.attributes) {
-            element.setAttribute(key, this.attributes[key]);
+            this.element.setAttribute(key, this.attributes[key]);
         }
         // add styling
         if (this.styling) for (let style in Object.keys(this.styling)) {
-            element.style[style] = this.styling[style];
+            this.element.style[style] = this.styling[style];
         }
-        return element;
 
+        if (location) {
+            document.querySelector(location).appendChild(this.element);
+            
+
+        }
+
+        return this.element;
+
+    }
+
+    makeRed(): void {
+        this.element.style.color = "red";
     }
 
     constructor(id: string, type: string, content: string | MyElement, attributes: StringDict, styling: StringDict) {
