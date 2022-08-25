@@ -3,16 +3,14 @@ import "./index.scss";
 
 class App {
     public constructor() {
-        console.log("App initialized");
+        console.log("App initialised");
     }
 
     public main(): void {
         console.log("App started");
         var temp = new MyElement("my-element", "div", "Hello World", {}, {});
-
+        
         temp.generateElement("#main");
-
-        temp.makeRed()
 
     }
 }

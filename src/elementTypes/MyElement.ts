@@ -2,7 +2,7 @@ import { StringDict } from "../helpers";
 
 class MyElement {
 
-    id: string;
+    className: string;
     type: string;
     content!: string | MyElement;
     attributes: StringDict;
@@ -12,8 +12,14 @@ class MyElement {
 
     generateElement(location?: string): HTMLElement {
 
+        if (this.element && location) {
+            throw new Error("Element already exists");
+        }
+
         this.element = document.createElement(this.type);
-        this.element.id = this.id;
+        
+        if (this.className) this.element.className = this.className;
+        
         // check if content is String or MyElement
         if (typeof this.content === "string") {
             this.element.innerHTML = this.content;
@@ -31,8 +37,6 @@ class MyElement {
 
         if (location) {
             document.querySelector(location).appendChild(this.element);
-            
-
         }
 
         return this.element;
@@ -43,8 +47,8 @@ class MyElement {
         this.element.style.color = "red";
     }
 
-    constructor(id: string, type: string, content: string | MyElement, attributes: StringDict, styling: StringDict) {
-        this.id = id;
+    constructor(className: string, type: string, content: string | MyElement, attributes: StringDict, styling: StringDict) { // This gives all the values to the properties of the class so that they can be used
+        this.className = className; 
         this.type = type;
         this.content = content;
         this.attributes = attributes;
