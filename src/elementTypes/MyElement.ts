@@ -30,10 +30,13 @@ class MyElement {
         for (let key in this.attributes) {
             this.element.setAttribute(key, this.attributes[key]);
         }
+        
         // add styling
-        if (this.styling) for (let style in Object.keys(this.styling)) {
-            this.element.style[style] = this.styling[style];
-        }
+        if (this.styling) Object.keys(this.styling).forEach(styling => {
+            if (typeof styling === "string") {
+                this.element.style[(styling as any)] = this.styling[styling];
+            }
+        });
 
         if (location) {
             document.querySelector(location).appendChild(this.element);
