@@ -1,7 +1,7 @@
 {
     "configurations": [
         {
-            "type": "pwa-msedge",
+            "type": "msedge",
             "name": "Launch Microsoft Edge",
             "request": "launch",
             "runtimeArgs": [
@@ -13,7 +13,7 @@
             }
         },
         {
-            "type": "pwa-msedge",
+            "type": "msedge",
             "name": "Launch Microsoft Edge in headless mode",
             "request": "launch",
             "runtimeArgs": [
@@ -29,7 +29,7 @@
             "type": "vscode-edge-devtools.debug",
             "name": "Open Edge DevTools",
             "request": "attach",
-            "url": "c:\\Users\\Jamie\\.vscode\\extensions\\ms-edgedevtools.vscode-edge-devtools-2.1.0\\out\\startpage\\index.html", // Provide your project's url to finish configuring
+            "url": "http://localhost:8080/", // Provide your project's url to finish configuring
             "presentation": {
                 "hidden": true
             }
