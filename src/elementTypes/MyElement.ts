@@ -23,6 +23,8 @@ class MyElement {
         this.generateElement();
     }
 
+    // LATER, MAKE EACH GENERATION BIT ITS OWN METHOD, GENERATEELEMENT WILL USE THESE METHODS TO GENERATE THE ELEMENT, AND THEN APPEND IT TO THE LOCATION. MORE MEMORY EFFICIENT.
+
     generateElement(location?: string): HTMLElement {
 
         // If a new location is specified after the element is already generated, an error will be thrown.
