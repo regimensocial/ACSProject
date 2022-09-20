@@ -5,9 +5,9 @@ class MyElement {
     className!: string; // element class
     type: string; // what element to generate, i.e., div, span, etc.
     _content!: string | MyElement; // content, either string or another MyElement
-    attributes!: StringDict; // any attributes
-    styling!: StringDict; // any CSS styling
-    events!: EventDict; // any events
+    _attributes!: StringDict; // any attributes
+    _styling!: StringDict; // any CSS styling
+    _events!: EventDict; // any events
 
     private element: HTMLElement; // this is where the actual element will be stored
 
@@ -20,11 +20,37 @@ class MyElement {
             content = content.toString();
         }
         this._content = content;
-        this.generateElement();
+        this.generation("content");
     }
 
+    get attributes(): StringDict {
+        return this._attributes;
+    }
 
-    private generation(aspect: string) {
+    set attributes(attributes: StringDict) {
+        this._attributes = attributes;
+        this.generation("attributes");
+    }
+
+    get styling(): StringDict {
+        return this._styling;
+    }
+
+    set styling(styling: StringDict) {
+        this._styling = styling;
+        this.generation("styling");
+    }
+
+    get events(): EventDict {
+        return this._events;
+    }
+
+    set events(events: EventDict) {
+        this._events = events;
+        this.generation("events");
+    }
+
+    private generation(aspect?: string) {
         // generate each feature separately
 
         this.element = this.element || document.createElement(this.type);
@@ -62,6 +88,14 @@ class MyElement {
 
                 break;
 
+            case "all":
+                console.log("first gen");
+                this.generation("content");
+                this.generation("attributes");
+                this.generation("styling");
+                this.generation("events");
+                break;
+
             default:
                 break;
         }
@@ -77,41 +111,21 @@ class MyElement {
             throw new Error("Element already exists");
         }
 
-        // If element already exists, replace it with a new element we can work on now
-        if (this.element) {
-            var newElement = document.createElement(this.type);
-            this.element.replaceWith(newElement);
-            this.element = newElement;
-        } else { // If element doesn't exist, create a new one
-            this.element = document.createElement(this.type);
-        }
-        
-        // If events are passed, add them to the element.
-        if (this.events) for (let event in this.events) {
-            
-            this.element.addEventListener(event, () => this.events[event]());
-        }
+        // // If element already exists, replace it with a new element we can work on now
+        // if (this.element) {
+        //     var newElement = document.createElement(this.type);
+        //     this.element.replaceWith(newElement);
+        //     this.element = newElement;
+        // } else { // If element doesn't exist, create a new one
+        //     this.element = document.createElement(this.type);
+        // }
+
+        this.element = this.element || document.createElement(this.type);
 
         // Add the class name to the element if it exists.
         if (this.className) this.element.className = this.className;
         
-        // check if _content is String or MyElement
-        if (typeof this._content === "string") {
-            this.element.innerHTML = this._content;
-        } else  {
-            this.element.appendChild(this._content.generateElement());
-        }
-        // add attributes
-        for (let key in this.attributes) {
-            this.element.setAttribute(key, this.attributes[key]);
-        }
-        
-        // add styling
-        if (this.styling) Object.keys(this.styling).forEach(styling => {
-            if (typeof styling === "string") {
-                this.element.style[(styling as any)] = this.styling[styling];
-            }
-        });
+        this.generation("all");
 
         // check if location is defined, then place element in location
         if (location) {
@@ -138,7 +152,7 @@ class MyElement {
         this.type = data.type;
         this.events = data.events;
         this._content = data.content;
-        this.attributes = data.attributes;
+        this._attributes = data.attributes;
         this.styling = data.styling;
     }
 }
