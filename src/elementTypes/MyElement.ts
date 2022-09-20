@@ -23,6 +23,51 @@ class MyElement {
         this.generateElement();
     }
 
+
+    private generation(aspect: string) {
+        // generate each feature separately
+
+        this.element = this.element || document.createElement(this.type);
+
+        switch (aspect) {
+            case "content":
+                if (typeof this._content === "string") {
+                    this.element.innerHTML = this._content;
+                } else {
+                    this.element.appendChild(this._content.generateElement());
+                }
+
+                break;
+            
+            case "attributes":
+                for (let key in this.attributes) {
+                    this.element.setAttribute(key, this.attributes[key]);
+                }
+
+                break;
+
+            case "styling":
+                if (this.styling) Object.keys(this.styling).forEach(styling => {
+                    if (typeof styling === "string") {
+                        this.element.style[(styling as any)] = this.styling[styling];
+                    }
+                });
+
+                break;
+            
+            case "events":
+                if (this.events) for (let event in this.events) {
+                    this.element.addEventListener(event, () => this.events[event]());
+                }
+
+                break;
+
+            default:
+                break;
+        }
+        
+    }
+
     // LATER, MAKE EACH GENERATION BIT ITS OWN METHOD, GENERATEELEMENT WILL USE THESE METHODS TO GENERATE THE ELEMENT, AND THEN APPEND IT TO THE LOCATION. MORE MEMORY EFFICIENT.
 
     generateElement(location?: string): HTMLElement {
