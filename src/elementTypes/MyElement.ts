@@ -27,6 +27,7 @@ class MyElement {
         return this._attributes;
     }
 
+    // take in new attributes value and update the element
     set attributes(attributes: StringDict) {
         this._attributes = attributes;
         this.generation("attributes");
@@ -36,6 +37,7 @@ class MyElement {
         return this._styling;
     }
 
+    // take in new styles value and update the element
     set styling(styling: StringDict) {
         this._styling = styling;
         this.generation("styling");
@@ -45,6 +47,7 @@ class MyElement {
         return this._events;
     }
 
+    // take in new events value and update the element
     set events(events: EventDict) {
         this._events = events;
         this.generation("events");
@@ -150,10 +153,10 @@ class MyElement {
     }) { // This gives all the values to the properties of the class so that they can be used
         this.className = data.className; 
         this.type = data.type;
-        this.events = data.events;
+        this._events = data.events;
         this._content = data.content;
         this._attributes = data.attributes;
-        this.styling = data.styling;
+        this._styling = data.styling;
     }
 }
 
