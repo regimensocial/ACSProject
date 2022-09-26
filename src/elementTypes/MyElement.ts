@@ -85,8 +85,17 @@ class MyElement {
                 break;
             
             case "events":
-                if (this.events) for (let event in this.events) {
-                    this.element.addEventListener(event, () => this.events[event]());
+                if (this.events) {
+                    
+                    Object.keys(this.events).forEach(event => {
+                        var funcName = "on" + event;
+                        this.element[(funcName)] = (this.events[event] as any);
+                    }
+                    
+                    // for (let event in this.events) {
+                    //     this.element.addEventListener(event, () => this.events[event]());
+                    //     this.element["on" + event] = () => this.events[event]();
+                    // }
                 }
 
                 break;
