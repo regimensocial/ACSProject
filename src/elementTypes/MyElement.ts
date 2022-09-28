@@ -47,13 +47,18 @@ class MyElement {
         return this._events;
     }
 
+    
     // take in new events value and update the element
     set events(events: EventDict) {
+        Object.keys(this.events).forEach(event => {
+            this.element.removeEventListener(event, (this.events[event] as any));
+        });
+
         this._events = events;
         this.generation("events");
     }
 
-    private generation(aspect?: string) {
+    private generation(aspect?: string): void {
         // generate each feature separately
 
         this.element = this.element || document.createElement(this.type);
@@ -86,16 +91,12 @@ class MyElement {
             
             case "events":
                 if (this.events) {
-                    
+                    console.log("events gen");
+
+                    // loop through each event key and add the event listener
                     Object.keys(this.events).forEach(event => {
-                        var funcName = "on" + event;
-                        this.element[(funcName)] = (this.events[event] as any);
-                    }
-                    
-                    // for (let event in this.events) {
-                    //     this.element.addEventListener(event, () => this.events[event]());
-                    //     this.element["on" + event] = () => this.events[event]();
-                    // }
+                        this.element.addEventListener(event, (this.events[event] as any));
+                    });
                 }
 
                 break;
@@ -113,8 +114,6 @@ class MyElement {
         }
         
     }
-
-    // LATER, MAKE EACH GENERATION BIT ITS OWN METHOD, GENERATEELEMENT WILL USE THESE METHODS TO GENERATE THE ELEMENT, AND THEN APPEND IT TO THE LOCATION. MORE MEMORY EFFICIENT.
 
     generateElement(location?: string): HTMLElement {
 

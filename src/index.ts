@@ -19,9 +19,16 @@ class App {
             },
             events: {
                 "click": () => {
-                    temp.state.test++;
-                    console.log(temp.state.test);
-                    temp.content = (temp.state.test).toString();
+                    console.log("Command 1, changing");
+                    temp.events = {
+                        "click": () => {
+                            
+                            console.log("Command 2");
+                            temp.state.test = temp.state.test + 1;
+                            console.log(temp.state.test);
+                            temp.content = (temp.state.test).toString();
+                        }
+                    }
                 }
             },
             state: {
@@ -30,16 +37,18 @@ class App {
         });
 
 
-        var temp2 = new MyElement({
-            className: "my-element",
-            type: "div",
-            content: temp,
-            attributes: {
-                "title": "This is a test",
-            }
-        });
+        // var temp2 = new MyElement({
+        //     className: "my-element",
+        //     type: "div",
+        //     content: temp,
+        //     attributes: {
+        //         "title": "This is a test",
+        //     }
+        // });
 
-        temp2.generateElement("#main");
+        temp.generateElement("#main");
+
+        
 
     }
 }
