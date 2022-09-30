@@ -4,19 +4,19 @@ class MyElement {
 
     className!: string; // element class
     type: string; // what element to generate, i.e., div, span, etc.
-    _content!: string | MyElement; // content, either string or another MyElement
+    _content!: string | MyElement | MyElement[]; // content, either string or another MyElement
     _attributes!: StringDict; // any attributes
     _styling!: StringDict; // any CSS styling
     _events!: EventDict; // any events
 
     private element: HTMLElement; // this is where the actual element will be stored
 
-    get content(): string | MyElement {
+    get content(): string | MyElement | MyElement[] {
         return this._content;
     }
 
-    set content(content: string | MyElement) {
-        if (typeof content !== "string") {
+    set content(content: string | MyElement | MyElement[]) {
+        if (!(content instanceof String) && !(content instanceof MyElement) && !(content instanceof Array)) {
             content = content.toString();
         }
         this._content = content;
@@ -67,8 +67,13 @@ class MyElement {
             case "content":
                 if (typeof this._content === "string") {
                     this.element.innerHTML = this._content;
-                } else {
+                } else if (this._content instanceof MyElement) {
                     this.element.appendChild(this._content.generateElement());
+                } else if (this._content instanceof Array) {
+                    this._content.forEach(element => {
+                        if (!(element instanceof MyElement)) throw "Content array must only contain MyElement objects";
+                        this.element.appendChild(element.generateElement());
+                    });
                 }
 
                 break;
@@ -102,11 +107,11 @@ class MyElement {
                 break;
 
             case "all":
-                console.log("first gen");
-                this.generation("content");
-                this.generation("attributes");
-                this.generation("styling");
-                this.generation("events");
+                console.log("first gen"); // this is just for debugging
+                // generate all features
+                ["content", "attributes", "styling", "events"].forEach(aspect => {
+                    this.generation(aspect);
+                });
                 break;
 
             default:
@@ -155,7 +160,7 @@ class MyElement {
         className?: string, 
         type: string, 
         events?: EventDict,
-        content: string | MyElement, 
+        content: string | MyElement | MyElement[], 
         attributes?: StringDict, 
         styling?: StringDict
     }) { // This gives all the values to the properties of the class so that they can be used
