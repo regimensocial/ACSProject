@@ -1,13 +1,13 @@
-import { EventDict, StringDict } from "../helpers";
+import { EventDict, State, StringDict } from "../helpers";
 
 class MyElement {
 
     className!: string; // element class
     type: string; // what element to generate, i.e., div, span, etc.
-    _content!: string | MyElement | MyElement[]; // content, either string or another MyElement
-    _attributes!: StringDict; // any attributes
-    _styling!: StringDict; // any CSS styling
-    _events!: EventDict; // any events
+    private _content!: string | MyElement | MyElement[]; // content, either string or another MyElement
+    private _attributes!: State; // any attributes
+    private _styling!: StringDict; // any CSS styling
+    private _events!: EventDict; // any events
 
     private element: HTMLElement; // this is where the actual element will be stored
 
@@ -23,12 +23,12 @@ class MyElement {
         this.generation("content");
     }
 
-    get attributes(): StringDict {
+    get attributes(): State {
         return this._attributes;
     }
 
     // take in new attributes value and update the element
-    set attributes(attributes: StringDict) {
+    set attributes(attributes: State) {
         this._attributes = attributes;
         this.generation("attributes");
     }
@@ -161,7 +161,7 @@ class MyElement {
         type: string, 
         events?: EventDict,
         content: string | MyElement | MyElement[], 
-        attributes?: StringDict, 
+        attributes?: State, 
         styling?: StringDict
     }) { // This gives all the values to the properties of the class so that they can be used
         this.className = data.className; 

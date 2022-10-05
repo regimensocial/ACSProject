@@ -1,9 +1,5 @@
-import { EventDict, StringDict } from "../helpers";
+import { EventDict, State, StringDict } from "../helpers";
 import MyElement from "./MyElement";
-
-interface State {
-    [key: string]: any; // should be addressed by a string, can be any value
-}
 
 class MyElementWithState extends MyElement { // an element which can store variables in its state
     private _state: State; // the state property, shouldn't be directly addressed, use the getter and setter instead.
@@ -21,7 +17,7 @@ class MyElementWithState extends MyElement { // an element which can store varia
         className?: string,
         type: string,
         events?: EventDict,
-        content: string | MyElement,
+        content: string | MyElement | MyElement[],
         attributes?: StringDict,
         styling?: StringDict,
         state?: State

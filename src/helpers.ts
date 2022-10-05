@@ -8,7 +8,12 @@ interface EventDict {
     [key: string]: Function; // This is a dictionary of events and functions.
 }
 
+interface State {
+    [key: string]: any; // should be addressed by a string, can be any value
+}
+
 export { // Must export so other files can use the functions/interfaces/types.
     StringDict,
-    EventDict
+    EventDict,
+    State
 }

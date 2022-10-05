@@ -1,3 +1,4 @@
+import Button from "./elementTypes/Button";
 import MyElement from "./elementTypes/MyElement";
 import MyElementWithState from "./elementTypes/MyElementWithState";
 import "./index.scss";
@@ -57,10 +58,19 @@ class App {
             }
         });
 
-        temp2.generateElement("#main");
+        // temp2.generateElement("#main");
 
-        
+        var buttonTest = new Button({
+            className: "button-test",
+            content: "Click me",
+            func: () => {
+                buttonTest.func = () => {
+                    console.log("Command 2");
+                }
+            }
+        });
 
+        buttonTest.generateElement("#main");
     }
 }
 
