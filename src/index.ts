@@ -60,17 +60,41 @@ class App {
 
         // temp2.generateElement("#main");
 
-        var buttonTest = new Button({
-            className: "button-test",
-            content: "Click me",
-            func: () => {
-                buttonTest.func = () => {
-                    console.log("Command 2");
+        // var buttonTest = new Button({
+        //     className: "button-test",
+        //     content: "Click me",
+        //     func: () => {
+        //         buttonTest.func = () => {
+        //             console.log("Command 2");
+        //         }
+        //     }
+        // });
+
+        // buttonTest.generateElement("#main");
+
+        var textInput = new MyElementWithState({ // Will use state for the value of the input
+            className: "text-input",
+            type: "input",
+            attributes: {
+                "type": "text",
+            },
+            content: "",
+            events: {
+                "input": (e: Event) => {
+                    textInput.state.value = (e.target as HTMLInputElement).value.toString();
+                    console.log(textInput.state.value);
                 }
+            },
+            state: {
+                "value": "",
             }
         });
 
-        buttonTest.generateElement("#main");
+        
+        textInput.generateElement("#main");
+
+
+
     }
 }
 
