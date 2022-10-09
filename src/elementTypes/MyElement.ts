@@ -9,7 +9,10 @@ class MyElement {
     private _styling!: StringDict; // any CSS styling
     private _events!: EventDict; // any events
 
-    private element: HTMLElement; // this is where the actual element will be stored
+    public element: HTMLElement; // this is where the actual element will be stored
+
+
+    private permanentEvents: EventDict = {}; // events that will be added to the element when it is generated, and will not be removed when new events are added
 
     get content(): string | MyElement | MyElement[] {
         return this._content;
@@ -100,7 +103,16 @@ class MyElement {
 
                     // loop through each event key and add the event listener
                     Object.keys(this.events).forEach(event => {
+                        if (event.startsWith("PERMANENT_")) { // if the event is a permanent event, and isn't already in the permanentEvents object add it
+                            if (!this.permanentEvents[event]) this.permanentEvents[event] = this.events[event];
+                            return; // don't add the event listener here, add it below
+                        }
                         this.element.addEventListener(event, (this.events[event] as any));
+                    });
+
+                    // loop through each permanent event key and add the event listener
+                    Object.keys(this.permanentEvents).forEach(event => {
+                        this.element.addEventListener(event.replace("PERMANENT_", ""), (this.permanentEvents[event] as any));
                     });
                 }
 

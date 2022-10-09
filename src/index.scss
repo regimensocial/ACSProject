@@ -1,3 +1,66 @@
+$standardBoxShadow: 0.2em 0.2em 0.4em #a3a7bd, -0.2em -0.2em 0.4em #fff; // these values are from another project
+$standardBoxShadowInset: inset 0.2em 0.2em 0.4em #a3a7bd, inset -0.2em -0.2em 0.4em #fff; // so is this
+
+// UI elements
+button {
+    padding: 10px;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: $standardBoxShadow;
+    border: transparent;
+    font-size: 1em;
+    background-color: transparent;
+    cursor: pointer;
+    &:hover {
+        box-shadow: $standardBoxShadowInset;
+    }
+}
+
+// Rest of document
+
 body {
     background-color: white;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+}
+
+.menu {
+    box-shadow: $standardBoxShadow;
+    padding: 20px;
+    box-sizing: border-box;
+    width: 600px;
+    max-width: 100%;
+    margin: 0 auto;
+
+    position: absolute;
+    top: 48%;
+    left: 50%;
+    transform: translate(-50%, -48%);
+
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+
+    .title {
+        margin: 0;
+        font-weight: 400;
+        font-size: 1.7em;
+    }
+
+    .description {
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .buttons {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+
+        row-gap: 20px;
+        column-gap: 20px;
+
+        button {
+            flex: 1 1 0px;
+        }
+    }
 }

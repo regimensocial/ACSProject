@@ -49,7 +49,7 @@ class Button extends MyElementWithState {
             attributes: data.attributes || {},
             styling: data.styling || {},
             events: {...data.events, ...{
-                click: data.func // add the click event to the events property
+                PERMANENT_click: data.func // add the click event to the events property
             }},
         });
 

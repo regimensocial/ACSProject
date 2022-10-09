@@ -11,89 +11,44 @@ class App {
     public main(): void { // This is the main function that is called when the application is started.
         console.log("App started");
 
-        // var temp = new MyElementWithState({
-        //     className: "my-element",
-        //     type: "div",
-        //     content: "Hello",
-        //     attributes: {
-        //         "title": "This is a test",
-        //     },
-        //     events: {
-        //         "click": () => { // on first click, log "Command 1", on second (and all other) clicks, log "Command 2
-        //             console.log("Command 1, changing");
-        //             temp.events = {
-        //                 "click": () => {
-        //                     console.log("Command 2");
-        //                     // add 1 to state on this event listener
-        //                     temp.state.test = temp.state.test + 1;
-        //                     console.log(temp.state.test);
-        //                     temp.content = (temp.state.test).toString();
-        //                 }
-        //             }
-        //         }
-        //     },
-        //     state: {
-        //         "test": 1,
-        //     },
-        // });
-
-
-        var temp2 = new MyElement({
-            className: "my-element",
+        // Make a menu
+        var menu = new MyElementWithState({
+            className: "menu",
             type: "div",
             content: [
+                // new title H1
                 new MyElement({
-                    className: "my-element",
+                    className: "title",
                     type: "div",
-                    content: "Hello",
+                    content: "A Level Computer Science Project",
                 }),
+                // description
                 new MyElement({
-                    className: "my-element",
+                    className: "description",
                     type: "div",
-                    content: "World",
+                    content: "By Jamie Adams",
                 }),
-            ],
-            attributes: {
-                "title": "This is a test",
-            }
-        });
+                // container for the buttons
+                new MyElement({
+                    className: "buttons",
+                    type: "div",
+                    content: [// new button for the notetaking side
+                        new Button({
+                            className: "button",
+                            content: "Notes",
+                        }),
+                        // new button for flashcards
+                        new Button({
+                            className: "button",
+                            content: "Flashcards",
+                        }),
+                    ]
+                })
+            ]
+        }
+        );
 
-        // temp2.generateElement("#main");
-
-        // var buttonTest = new Button({
-        //     className: "button-test",
-        //     content: "Click me",
-        //     func: () => {
-        //         buttonTest.func = () => {
-        //             console.log("Command 2");
-        //         }
-        //     }
-        // });
-
-        // buttonTest.generateElement("#main");
-
-        var textInput = new MyElementWithState({ // Will use state for the value of the input
-            className: "text-input",
-            type: "input",
-            attributes: {
-                "type": "text",
-            },
-            content: "",
-            events: {
-                "input": (e: Event) => {
-                    textInput.state.value = (e.target as HTMLInputElement).value.toString();
-                    console.log(textInput.state.value);
-                }
-            },
-            state: {
-                "value": "",
-            }
-        });
-
-        
-        textInput.generateElement("#main");
-
-
+        menu.generateElement("#main"); // generate the menu element and put it in the #main element.
 
     }
 }
