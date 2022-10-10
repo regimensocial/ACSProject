@@ -1,10 +1,11 @@
 $standardBoxShadow: 0.2em 0.2em 0.4em #a3a7bd, -0.2em -0.2em 0.4em #fff; // these values are from another project
 $standardBoxShadowInset: inset 0.2em 0.2em 0.4em #a3a7bd, inset -0.2em -0.2em 0.4em #fff; // so is this
+$generalFonts: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 
 // UI elements
 button {
     padding: 10px;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-family: $generalFonts;
     box-shadow: $standardBoxShadow;
     border: transparent;
     font-size: 1em;
@@ -20,7 +21,7 @@ button {
 body {
     background-color: white;
     margin: 0;
-    width: 100%;
+    width: 100%; // We need body width and height be 100% for centring
     height: 100%;
     max-width: 100%;
 }
@@ -28,17 +29,17 @@ body {
 .menu {
     box-shadow: $standardBoxShadow;
     padding: 20px;
-    box-sizing: border-box;
-    width: 600px;
+    box-sizing: border-box; // We need this for padding to work within our given size
+    width: 600px; 
     max-width: 100%;
     margin: 0 auto;
 
     position: absolute;
-    top: 48%;
+    top: 48%; // I've used 48% because it looks nicer to have it slighter higher than normal
     left: 50%;
     transform: translate(-50%, -48%);
 
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-family: $generalFonts;
 
     .title {
         margin: 0;
