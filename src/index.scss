@@ -1,14 +1,14 @@
-$standardBoxShadow: 0.2em 0.2em 0.4em #a3a7bd, -0.2em -0.2em 0.4em #fff; // these values are from another project
+$standardBoxShadow: 0.2em 0.2em 0.4em #a3a7bd, -0.2em -0.2em 0.4em #fff; // this is from another project
 $standardBoxShadowInset: inset 0.2em 0.2em 0.4em #a3a7bd, inset -0.2em -0.2em 0.4em #fff; // so is this
 $generalFonts: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 
 // UI elements
 button {
     padding: 10px;
-    font-family: $generalFonts;
-    box-shadow: $standardBoxShadow;
     border: transparent;
     font-size: 1em;
+    font-family: $generalFonts; // make button act more like regular text
+    box-shadow: $standardBoxShadow;
     background-color: transparent;
     cursor: pointer;
     &:hover {
@@ -27,22 +27,22 @@ body {
 }
 
 .menu {
-    box-shadow: $standardBoxShadow;
+    font-family: $generalFonts;
     padding: 20px;
     box-sizing: border-box; // We need this for padding to work within our given size
     width: 600px; 
     max-width: 100%;
-    margin: 0 auto;
+    margin: 0 auto; // horizontal centering
 
+    // centring the menu
     position: absolute;
     top: 48%; // I've used 48% because it looks nicer to have it slighter higher than normal
-    left: 50%;
-    transform: translate(-50%, -48%);
+    left: 50%; 
+    transform: translate(-50%, -50%); 
 
-    font-family: $generalFonts;
-
+    box-shadow: $standardBoxShadow;
+    
     .title {
-        margin: 0;
         font-weight: 400;
         font-size: 1.7em;
     }
@@ -54,15 +54,14 @@ body {
 
     .buttons {
         display: flex;
-        flex-direction: row;
-        justify-content: center;
-        flex-wrap: wrap;
-
-        row-gap: 20px;
+        flex-direction: row; // We need this for buttons to be in a row
+        justify-content: center; 
+        flex-wrap: wrap; // We need this for buttons to wrap if there are too many of them
+        row-gap: 20px; // space them 20px so they don't touch each other
         column-gap: 20px;
 
         button {
-            flex: 1 1 0px;
+            flex: 1 1 0; // We need this for buttons to be the same size
         }
     }
 }
