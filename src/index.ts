@@ -11,30 +11,6 @@ class App {
     public main(): void { // This is the main function that is called when the application is started.
         console.log("App started");
 
-        var buttonContainer = new MyElement({
-            className: "buttons",
-            type: "div",
-            content: [// new button for the notetaking side
-                new Button({
-                    className: "button",
-                    content: "Notes",
-                }),
-                // new button for flashcards
-                new Button({
-                    className: "button",
-                    content: "Flashcards",
-                    func: () => {
-                        buttonContainer.content = [...(buttonContainer.content as MyElement[]),
-                        new MyElementWithState({
-                            className: "flashcard",
-                            type: "div",
-                            content: "Flashcard",
-                        })];
-                    }
-                }),
-            ]
-        });
-
         // Make a menu
         var menu = new MyElementWithState({
             className: "menu",
@@ -53,7 +29,21 @@ class App {
                     content: "By Jamie Adams",
                 }),
                 // container for the buttons
-                buttonContainer
+                new MyElement({
+                    className: "buttons",
+                    type: "div",
+                    content: [// new button for the notetaking side
+                        new Button({
+                            className: "button",
+                            content: "Notes",
+                        }),
+                        // new button for flashcards
+                        new Button({
+                            className: "button",
+                            content: "Flashcards",
+                        }),
+                    ]
+                })
             ]
         }
         );
