@@ -71,10 +71,13 @@ class MyElement {
                 if (typeof this._content === "string") {
                     this.element.innerHTML = this._content;
                 } else if (this._content instanceof MyElement) {
-                    this.element.appendChild(this._content.generateElement());
+                    this.element.replaceWith(this._content.generateElement());
                 } else if (this._content instanceof Array) {
+                    // empty this.element contents
+                    this.element.innerHTML = "";
                     this._content.forEach(element => {
                         if (!(element instanceof MyElement)) throw "Content array must only contain MyElement objects";
+                        // make this.element empty
                         this.element.appendChild(element.generateElement());
                     });
                 }
@@ -136,6 +139,7 @@ class MyElement {
 
         // If a new location is specified after the element is already generated, an error will be thrown.
         if (this.element && location) {
+            console.log(this.element, location);
             throw new Error("Element already exists");
         }
 
@@ -157,7 +161,9 @@ class MyElement {
 
         // check if location is defined, then place element in location
         if (location) {
+            // replace the element with the new element
             document.querySelector(location).appendChild(this.element);
+            // document.querySelector(location).replaceWith(this.element);
         }
 
         return this.element;

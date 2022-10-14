@@ -11,12 +11,9 @@ class App {
     public main(): void { // This is the main function that is called when the application is started.
         console.log("App started");
 
-        // Make a menu
-        var menu = new MyElementWithState({
-            className: "menu",
-            type: "div",
-            content: [
-                // new title H1
+
+        var menuContents = { // This is the contents of the menu, used to switch
+            main: [
                 new MyElement({
                     className: "title",
                     type: "div",
@@ -42,14 +39,45 @@ class App {
                             className: "button",
                             content: "Flashcards",
                         }),
+                        new Button({
+                            className: "button",
+                            content: "About",
+                            func : () => {
+                                menu.content = menuContents.about;
+                            }
+                        }),
                     ]
                 })
+            ],
+            about: [
+                new MyElement({
+                    className: "title",
+                    type: "div",
+                    content: "About",
+                }),
+                // back button
+                new Button({
+                    className: "button",
+                    content: "Back",
+                    func: () => {
+                        menu.content = menuContents.main;
+                    }
+                })
             ]
-        }
-        );
+        };
+
+        // Make a menu
+        var menu = new MyElementWithState({
+            className: "menu",
+            type: "div",
+            content: "Loading...",
+        });
+
+        
 
         menu.generateElement("#main"); // generate the menu element and put it in the #main element.
 
+        menu.content = menuContents.main;
     }
 }
 
