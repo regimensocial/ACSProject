@@ -4,7 +4,7 @@ class MyElement {
 
     className!: string; // element class
     type: string; // what element to generate, i.e., div, span, etc.
-    private _content!: string | MyElement | MyElement[]; // content, either string or another MyElement
+    private _content!: string | MyElement | MyElement[] | HTMLElement; // content, either string or another MyElement, or a raw HTMLElement
     private _attributes!: State; // any attributes
     private _styling!: StringDict; // any CSS styling
     private _events!: EventDict; // any events
@@ -14,12 +14,12 @@ class MyElement {
 
     private permanentEvents: EventDict = {}; // events that will be added to the element when it is generated, and will not be removed when new events are added
 
-    get content(): string | MyElement | MyElement[] {
+    get content(): string | MyElement | MyElement[] | HTMLElement {
         return this._content;
     }
 
-    set content(content: string | MyElement | MyElement[]) {
-        if (!(content instanceof String) && !(content instanceof MyElement) && !(content instanceof Array)) {
+    set content(content: string | MyElement | MyElement[] | HTMLElement) {
+        if (!(content instanceof String) && !(content instanceof MyElement) && !(content instanceof Array) && !(content instanceof HTMLElement)) {
             content = content.toString();
         }
         this._content = content;
@@ -71,7 +71,8 @@ class MyElement {
                 if (typeof this._content === "string") {
                     this.element.innerHTML = this._content;
                 } else if (this._content instanceof MyElement) {
-                    this.element.replaceWith(this._content.generateElement());
+                    this.element.innerHTML = "";
+                    this.element.appendChild(this._content.generateElement());
                 } else if (this._content instanceof Array) {
                     // empty this.element contents
                     this.element.innerHTML = "";
@@ -80,6 +81,9 @@ class MyElement {
                         // make this.element empty
                         this.element.appendChild(element.generateElement());
                     });
+                } else if (this._content instanceof HTMLElement) { // if its an HTMLElement, just replace the element with it 
+                    this.element.innerHTML = "";
+                    this.element.appendChild(this._content);
                 }
 
                 break;
@@ -178,7 +182,7 @@ class MyElement {
         className?: string, 
         type: string, 
         events?: EventDict,
-        content: string | MyElement | MyElement[], 
+        content: string | MyElement | MyElement[] | HTMLElement, 
         attributes?: State, 
         styling?: StringDict
     }) { // This gives all the values to the properties of the class so that they can be used
