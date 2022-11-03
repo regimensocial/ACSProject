@@ -15,9 +15,11 @@ class Button extends MyElementWithState {
 
     // set the func property
     set func(func: Function) {
-        this.events = {...this.events, ...{
-            click: func // add the click event to the events property
-        }};
+        this.events = {
+            ...this.events, ...{
+                click: func // add the click event to the events property
+            }
+        };
     }
 
     // return the disabled value
@@ -27,11 +29,20 @@ class Button extends MyElementWithState {
 
     // set disabled to whatever given
     set disabled(value: boolean) {
-        this.attributes = {...this.attributes, ...{
-            "disabled": value,
-        }}
+        if (value) {
+            this.attributes = {
+                // add the disabled attribute to the attributes property
+                ...this.attributes, ...{
+                    "disabled": true,
+                }
+            }
+        } else { // if disabled is false, remove the disabled attribute
+            delete this.attributes["disabled"];
+            this.element.removeAttribute("disabled");
+        }
+
     };
-    
+
     constructor(
         data: { // take in the same data as MyElementWithState except for the state property, func, and type property
             func?: Function,
@@ -48,12 +59,14 @@ class Button extends MyElementWithState {
             content: data.content || "Button",
             attributes: data.attributes || {},
             styling: data.styling || {},
-            events: {...data.events, ...{
-                PERMANENT_click: data.func // add the click event to the events property
-            }},
+            events: {
+                ...data.events, ...{
+                    PERMANENT_click: data.func // add the click event to the events property
+                }
+            },
         });
 
-    
+
     }
 }
 

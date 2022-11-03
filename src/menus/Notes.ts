@@ -4,6 +4,65 @@ import { State } from "../helpers";
 
 // export the function returning array of MyElements
 export default (props: State) => {
+
+    var showNoteMenu = false;
+    // menu with input title, create, cancel
+    var newNoteMenu = new MyElement({
+        className: "newNoteMenu",
+        type: "div",
+        content: [
+            new MyElement({
+                className: "subtitle",
+                type: "span",
+                content: "New Note",
+            }),
+            new MyElement({
+                className: "input",
+                type: "input",
+                content: "",
+                attributes: {
+                    placeholder: "Title"
+                }
+            }),
+            new Button({
+                className: "button",
+                content: "Create",
+            }),
+            new Button({
+                className: "button",
+                content: "Cancel",
+            }),
+        ],
+        styling: {
+            visibility: showNoteMenu ? "visible" : "hidden"
+        }
+    });
+
+    // separated from main variable so that they can be updated selectively 
+    var buttons = {
+        create: new Button({
+            className: "button",
+            content: "Create",
+            func: () => {
+                showNoteMenu = !showNoteMenu;
+                // update create button to show cancel button
+                buttons.create.content = showNoteMenu ? "Cancel" : "Create";
+                newNoteMenu.styling = {
+                    // show or hide the menu depending on the value of showNoteMenu
+                    visibility: showNoteMenu ? "visible" : "hidden"
+                };
+                // disable delete button while making note
+                buttons.delete.disabled = showNoteMenu;
+            }
+        }),
+        // new button for deleting flashcards
+        delete: new Button({
+            className: "button",
+            content: "Delete",
+        }),
+        
+    }
+
     return [
         new MyElement({
             className: "title",
@@ -24,22 +83,12 @@ export default (props: State) => {
                         props.changeMenu("main");
                     }
                 }),
-                new Button({
-                    className: "button",
-                    content: "Create",
-                }),
-                // new button for flashcards
-                new Button({
-                    className: "button",
-                    content: "Delete",
-                }),
-                // new button for flashcards
-                new Button({
-                    className: "button",
-                    content: "Info",
-                }),
+                buttons.create,
+                buttons.delete,
             ]
         }),
+
+        newNoteMenu,
 
         // list of notes
         new MyElement({
