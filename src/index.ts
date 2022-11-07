@@ -17,6 +17,11 @@ class App {
         var menuProps = {
             changeMenu: (menuName: string) => {
                 menu.content = generatedMenus[menuName];
+            },
+            hideMenus: () => {
+                menu.styling = {...menu.styling,
+                    display: "none"
+                };
             }
         };
 

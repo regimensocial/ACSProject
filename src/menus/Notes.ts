@@ -7,6 +7,16 @@ export default (props: State) => {
 
     var showNoteMenu = false;
     // menu with input title, create, cancel
+
+    var noteMenuTitle = new MyElement({
+        className: "input",
+        type: "input",
+        content: "",
+        attributes: {
+            placeholder: "Title"
+        }
+    });
+
     var newNoteMenu = new MyElement({
         className: "newNoteMenu",
         type: "div",
@@ -16,17 +26,15 @@ export default (props: State) => {
                 type: "span",
                 content: "New Note",
             }),
-            new MyElement({
-                className: "input",
-                type: "input",
-                content: "",
-                attributes: {
-                    placeholder: "Title"
-                }
-            }),
+            noteMenuTitle,
             new Button({
                 className: "button",
                 content: "Create",
+                func: () => {
+                    // hide all menus
+                    if (!(noteMenuTitle.element as HTMLInputElement).value) return;
+                    props.hideMenus();
+                }
             }),
             new Button({
                 className: "button",
