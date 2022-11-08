@@ -16,11 +16,16 @@ class Editor {
 
     private data: State = {
         "1": {
-            text: "Hello {2}",
+            text: "The quick {2} the lazy dog.",
         },
         "2": {
-            text: "test 2",
+            text: "brown {3} jumps over",
+            atr: ["bold"]
         },
+        "3": {
+            text: "fox",
+            atr: ["blue"] 
+        }
     }
 
     public generateElement(location: string): HTMLElement {
