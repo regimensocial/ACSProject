@@ -1,3 +1,4 @@
+import Editor from "../editor";
 import Button from "../elementTypes/Button";
 import MyElement from "../elementTypes/MyElement";
 import { State } from "../helpers";
@@ -34,6 +35,11 @@ export default (props: State) => {
                     // hide all menus
                     if (!(noteMenuTitle.element as HTMLInputElement).value) return;
                     props.hideMenus();
+
+                    var editor = new Editor({
+                        noteID: (noteMenuTitle.element as HTMLInputElement).value,
+                    }).generateElement(".editor");
+
                 }
             }),
             new Button({
