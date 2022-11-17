@@ -36,10 +36,13 @@ export default (props: State) => {
                     if (!(noteMenuTitle.element as HTMLInputElement).value) return;
                     props.hideMenus();
 
+                    // make new instance of editor
                     var editor = new Editor({
+                        // for now, just use the title as the id
                         noteID: (noteMenuTitle.element as HTMLInputElement).value,
-                    }).generateElement(".editor");
+                    });
 
+                    editor.generateElement(".editor"); // generate the editor
                 }
             }),
             new Button({

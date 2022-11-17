@@ -20,11 +20,9 @@ class Editor {
         },
         "2": {
             text: "brown {3} jumps over",
-            atr: ["bold"]
         },
         "3": {
             text: "fox",
-            atr: ["blue"] 
         }
     }
 

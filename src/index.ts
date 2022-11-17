@@ -15,10 +15,12 @@ class App {
         console.log("App started");
 
         var menuProps = {
+            // change current menu
             changeMenu: (menuName: string) => {
                 menu.content = generatedMenus[menuName];
             },
             hideMenus: () => {
+                // hide all menus
                 menu.styling = {...menu.styling,
                     display: "none"
                 };
