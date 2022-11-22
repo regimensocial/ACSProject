@@ -14,17 +14,16 @@ class Editor {
         console.log("Editor started");
     }
 
+    // Example data for now
     private data: State = {
         "1": {
             text: "The quick {2} the lazy dog.",
         },
         "2": {
             text: "brown {3} jumps over",
-            atr: ["bold"]
         },
         "3": {
             text: "fox",
-            atr: ["blue"] 
         }
     }
 
@@ -32,8 +31,9 @@ class Editor {
 
         var renderedData: State = {};
 
+        // loop through the data and render it
         Object.keys(this.data).forEach((key) => {
-            // create span, fill with text, add to renderedData, Don't use MyElement, use inbuilt functions;
+            // create span use inbuilt functions, fill with text, add to renderedData
             var span = document.createElement("span");
             span.innerText = this.data[key].text;
             renderedData[key] = span;
@@ -41,22 +41,23 @@ class Editor {
 
         console.log(renderedData);
 
+        // loop through the data and replace the placeholders with the rendered data
         Object.keys(renderedData).forEach((key) => {
-            // replace all {id} with renderedData[id]
-
+            
             var text = renderedData[key].innerHTML;
-            console.log(text)
-                
+
+            // find any placeholders, replace them with the rendered data
+            // TODO: make this more efficient
             Object.keys(renderedData).forEach((key) => {
-                if (text.includes("{" + key + "}")) {
-                    text = text.replace("{" + key + "}", renderedData[key].outerHTML);
-                }
+                if (text.includes(`{${key}}`)) text = text.replace(`{${key}}`, renderedData[key].outerHTML);
             });
 
             renderedData[key].innerHTML = text;
 
         });
 
+        // generate element from the rendered data
+        // render into provided location
         this.element = new MyElement({
             className: "editorMain",
             type: "div",
