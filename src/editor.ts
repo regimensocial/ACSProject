@@ -21,9 +21,17 @@ class Editor {
         },
         "2": {
             text: "brown {3} jumps over",
+            // adding style to the data
+            styling: [
+                "bold"
+            ]
         },
         "3": {
             text: "fox",
+            // adding style to the data
+            styling: [
+                "colour-blue"
+            ]
         }
     }
 
