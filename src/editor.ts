@@ -43,7 +43,21 @@ class Editor {
         Object.keys(this.data).forEach((key) => {
             // create span use inbuilt functions, fill with text, add to renderedData
             var span = document.createElement("span");
-            span.innerText = this.data[key].text;
+            var elemInfo = this.data[key]
+            span.innerText = elemInfo.text;
+            // add a class so I can specifically style the note spans
+            span.classList.add("element");
+            // iterate through the styling and add the classes (except colour)
+            if (elemInfo.styling) elemInfo.styling.forEach((style: string) => {
+                if (style.startsWith("colour-")) {
+                    // so colouring is a special case, we need to add the colour to the span
+                    // because it wouldn't make sense to add a class for every colour
+                    span.style.color = style.replace("colour-", "");
+                } else {
+                    span.classList.add(style);
+                }
+            })
+            // add the span to the rendered data
             renderedData[key] = span;
         });
 

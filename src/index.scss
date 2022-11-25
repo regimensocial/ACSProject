@@ -79,4 +79,26 @@ body {
 .editor {
     width: 100%; // We need this for editor to fill the page
     height: 100%; // ditto
+
+    .editorMain {
+        .element { // stylings here will be from SC 10.4
+            .bold {
+                font-weight: bold;
+            }
+            .italic {
+                font-style: italic;
+            }
+            .underline {
+                text-decoration: underline;
+            }
+            .subscript {
+                vertical-align: sub;
+                font-size: 0.8em;
+            }
+            .superscript {
+                vertical-align: super;
+                font-size: 0.8em;
+            }
+        }
+    }
 }
