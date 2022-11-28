@@ -3,6 +3,21 @@
 import MyElement from "./elementTypes/MyElement";
 import { State, StringDict } from "./helpers";
 
+interface EditorElement {
+    text: string; // styling will be an array of specific strings
+    styling?: (
+        `colour-${string}`|
+        "bold"|
+        "italic"|
+        "subscript"|
+        "superscript"|
+        "normal"
+    )[],
+}
+
+interface EditorElements {
+    [key: string]: EditorElement; // should be addressed by a string, can be any value
+}
 
 
 class Editor {
@@ -15,7 +30,7 @@ class Editor {
     }
 
     // Example data for now
-    private data: State = {
+    private data: EditorElements = {
         "1": {
             text: "The quick {2} the lazy dog.",
         },
@@ -24,13 +39,20 @@ class Editor {
             // adding style to the data
             styling: [
                 "bold"
-            ]
+            ],
         },
         "3": {
-            text: "fox",
+            text: "f{4}",
             // adding style to the data
             styling: [
                 "colour-blue"
+            ]
+        },
+        "4": {
+            text: "ox",
+            // adding style to the data
+            styling: [
+                "normal"
             ]
         }
     }
