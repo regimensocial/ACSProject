@@ -3,20 +3,19 @@
 import MyElement from "./elementTypes/MyElement";
 import { State, StringDict } from "./helpers";
 
-interface EditorElement {
-    text: string; // styling will be an array of specific strings
-    styling?: (
-        `colour-${string}`|
-        "bold"|
-        "italic"|
-        "subscript"|
-        "superscript"|
-        "normal"
-    )[],
-}
-
+// this is the interface for the editor elements
 interface EditorElements {
-    [key: string]: EditorElement; // should be addressed by a string, can be any value
+    [key: string]: { // below are the attributes of the editor elements
+        text: string; // styling will be an array of specific strings
+        styling?: ( // stylings (from SC 10.4)
+            `colour-${string}`|
+            "bold"|
+            "italic"|
+            "subscript"|
+            "superscript"|
+            "normal"
+        )[],
+    }; 
 }
 
 
@@ -29,7 +28,7 @@ class Editor {
         console.log("Editor started");
     }
 
-    // Example data for now
+    // This implements the EditorElements interface
     private data: EditorElements = {
         "1": {
             text: "The quick {2} the lazy dog.",
@@ -57,6 +56,7 @@ class Editor {
         }
     }
 
+    // This function is used to render the editor
     public generateElement(location: string): HTMLElement {
 
         var renderedData: State = {};
@@ -79,6 +79,7 @@ class Editor {
                     span.classList.add(style);
                 }
             })
+
             // add the span to the rendered data
             renderedData[key] = span;
         });
@@ -110,6 +111,11 @@ class Editor {
             },
             content: renderedData["1"]
         }).generateElement(location);
+
+        // prevent user from editing the note by preventing default when they try to change the text
+        this.element.addEventListener("change", (e) => {
+            e.preventDefault();
+        });
 
         return this.element;
     }
