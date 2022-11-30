@@ -56,15 +56,21 @@ class Editor {
         }
     }
 
+    private renderedData: State = {};
+
     // This function is used to render the editor
     public generateElement(location: string): HTMLElement {
 
-        var renderedData: State = {};
+        
 
         // loop through the data and render it
         Object.keys(this.data).forEach((key) => {
-            // create span use inbuilt functions, fill with text, add to renderedData
+            // create span use inbuilt functions, fill with text, add to this.renderedData
             var span = document.createElement("span");
+            
+            // Adding the id to the span as a dataset property so we can keep track
+            span.dataset.key = key
+            
             var elemInfo = this.data[key]
             span.innerText = elemInfo.text;
             // add a class so I can specifically style the note spans
@@ -81,23 +87,23 @@ class Editor {
             })
 
             // add the span to the rendered data
-            renderedData[key] = span;
+            this.renderedData[key] = span;
         });
 
-        console.log(renderedData);
+        console.log(this.renderedData);
 
         // loop through the data and replace the placeholders with the rendered data
-        Object.keys(renderedData).forEach((key) => {
+        Object.keys(this.renderedData).forEach((key) => {
             
-            var text = renderedData[key].innerHTML;
+            var text = this.renderedData[key].innerHTML;
 
             // find any placeholders, replace them with the rendered data
             // TODO: make this more efficient
-            Object.keys(renderedData).forEach((key) => {
-                if (text.includes(`{${key}}`)) text = text.replace(`{${key}}`, renderedData[key].outerHTML);
+            Object.keys(this.renderedData).forEach((key) => {
+                if (text.includes(`{${key}}`)) text = text.replace(`{${key}}`, this.renderedData[key].outerHTML);
             });
 
-            renderedData[key].innerHTML = text;
+            this.renderedData[key].innerHTML = text;
 
         });
 
@@ -109,24 +115,65 @@ class Editor {
             attributes: {
                 contentEditable: "true",
             },
-            content: renderedData["1"]
+            content: this.renderedData["1"]
         }).generateElement(location);
 
         // prevent user from editing the note by preventing default when they try to change the text
-        this.element.onclick = (event) => {
-            var x = window.getSelection()
+        
+        // this.element.onmousedown = (event) => {
 
-            // // print the text of the selection
-            // console.log(x.toString())
+        //     // clear the selected elements
+        //     selectedElements = [];
 
-            // // get the element that was clicked
-            // var elem = x.anchorNode.childNodes[];
-            // console.log(elem)
+        //     // // get element mouse is down on
+        //     // // var element = event.target as HTMLElement;
+        //     // selectedElements.push(this.element);
+        // };
 
-            // // select from renderedData
-            // var elemID = Object.keys(renderedData).find(key => renderedData[key] === elem);
-            // console.log(elemID)
+        document.onmouseup = (event) => {
             
+            // get the selected elements and delete them 
+
+            // get the selected text
+            var selection = window.getSelection();
+
+            if (selection.rangeCount === 0) return
+
+            var range = selection.getRangeAt(0);
+
+            // clone contents but we need the first element to have the same styling and class as the parent
+            var clone = range.cloneContents();
+            
+            // check if first node is element or text or if it's a single node
+            
+            if (clone.childNodes[0] && clone.childNodes.length === 1) {
+                // if it's text, put it in a div with the same class name and styling as the parent
+                console.log("here")
+                // clone the parent without using cloneNode because it doesn't work
+                var parent = (range.commonAncestorContainer.parentElement as HTMLElement);
+                var newParent = document.createElement(parent.tagName);
+                newParent.className = parent.className;
+                newParent.dataset.key = parent.dataset.key;
+                
+                // add the whole clone to the parent clone
+                newParent.appendChild(clone);
+
+                console.log(newParent);
+                
+            } else if ( clone.childNodes[0] && clone.childNodes[0].nodeType === Node.TEXT_NODE) {
+                // clone the parent without using cloneNode because it doesn't work
+                var parent = (range.commonAncestorContainer as HTMLElement);
+                var newParent = document.createElement(parent.tagName);
+                newParent.className = parent.className;
+                newParent.dataset.key = parent.dataset.key;
+                
+                // add the whole clone to the parent clone
+                newParent.appendChild(clone);
+
+                console.log(newParent);
+            } else {
+                console.log(clone);
+            }
         };
 
         return this.element;
