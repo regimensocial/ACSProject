@@ -113,9 +113,21 @@ class Editor {
         }).generateElement(location);
 
         // prevent user from editing the note by preventing default when they try to change the text
-        this.element.addEventListener("change", (e) => {
-            e.preventDefault();
-        });
+        this.element.onclick = (event) => {
+            var x = window.getSelection()
+
+            // // print the text of the selection
+            // console.log(x.toString())
+
+            // // get the element that was clicked
+            // var elem = x.anchorNode.childNodes[];
+            // console.log(elem)
+
+            // // select from renderedData
+            // var elemID = Object.keys(renderedData).find(key => renderedData[key] === elem);
+            // console.log(elemID)
+            
+        };
 
         return this.element;
     }
