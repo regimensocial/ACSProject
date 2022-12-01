@@ -130,6 +130,7 @@ class Editor {
             // this is a clone of the contents, so we can observe it
             var clone = range.cloneContents();
 
+            console.log(clone);
             // make copy of clone and set to clone
             clone = (clone.cloneNode(true) as DocumentFragment);
             // this is the parent of element that the selection is in
@@ -141,52 +142,21 @@ class Editor {
                 firstParent = firstParent as HTMLElement;
             }
 
-            // cloning the parent so we don't affect the original
-            // var cloneParent = firstParent.cloneNode(true) as HTMLElement;
-            // rewrite above without using cloneNode
-            var cloneParent = document.createElement((firstParent as HTMLElement).tagName);
-            cloneParent.innerHTML = (firstParent as HTMLElement).innerHTML;
-            cloneParent.dataset.key = (firstParent as HTMLElement).dataset.key;
+            var newClone;
 
-            // put the variable clone in the parent
-            cloneParent.innerHTML = "";
-            cloneParent.appendChild(clone);
-
-            // this is an array of all of the parents, I've added the common ancestor container to the start
-            var parents: HTMLElement[] = [(firstParent as HTMLElement)];
-
-            // this checks if the next parent is the editor element, if it is, it stops
-            while (!parents[parents.length - 1].parentElement.classList.contains("editorMain")) {
-                // add the parent to the array
-                parents.push(parents[parents.length - 1].parentElement);
+            // get all parents until .editorMain and wrap them around the clone
+            while (firstParent && (firstParent as HTMLElement).classList && !(firstParent as HTMLElement).classList.contains("editorMain")) {
+                var newParent = document.createElement((firstParent as HTMLElement).tagName);
+                newParent.dataset.key = (firstParent as HTMLElement).dataset.key;
+                var thingToAppend = newClone ? newClone : clone;
+                newParent.appendChild(thingToAppend);
+                newClone = (newParent);
+                firstParent = firstParent.parentElement;
             }
 
+            console.log(newClone);
 
-            var finalParent; 
-            // now we need to put each parent inside the next parent
-            // this is done by looping through the parents array
-            for (var i = 0; i < parents.length - 1; i++) {
-                // get the current parent
-                var parent = parents[i];
 
-                var cloneCurrentParent = document.createElement(parent.tagName);
-                cloneCurrentParent.dataset.key = parent.dataset.key;
-
-                // get the next parent
-                var nextParent = parents[i + 1];
-
-                var cloneNextParent = document.createElement(nextParent.tagName);
-                cloneNextParent.dataset.key = nextParent.dataset.key;
-                
-                // put the current parent inside the next parent
-                cloneNextParent.appendChild(cloneCurrentParent);
-                // set the final parent to the last parent
-                finalParent = cloneNextParent;
-
-            }
-
-            // now we have the parent with the selection inside it, log it
-            console.log(finalParent);
             
         };
 
