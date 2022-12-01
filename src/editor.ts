@@ -65,7 +65,7 @@ class Editor {
 
         // loop through the data and render it
         Object.keys(this.data).forEach((key) => {
-            // create span use inbuilt functions, fill with text, add to this.renderedData
+            // create span using inbuilt functions, fill with text, add to this.renderedData
             var span = document.createElement("span");
             
             // Adding the id to the span as a dataset property so we can keep track
@@ -118,62 +118,76 @@ class Editor {
             content: this.renderedData["1"]
         }).generateElement(location);
 
-        // prevent user from editing the note by preventing default when they try to change the text
-        
-        // this.element.onmousedown = (event) => {
-
-        //     // clear the selected elements
-        //     selectedElements = [];
-
-        //     // // get element mouse is down on
-        //     // // var element = event.target as HTMLElement;
-        //     // selectedElements.push(this.element);
-        // };
-
-        document.onmouseup = (event) => {
+        // this is for selection via the mouse
+        this.element.onmouseup = (event) => {
             
-            // get the selected elements and delete them 
-
             // get the selected text
             var selection = window.getSelection();
-
-            if (selection.rangeCount === 0) return
-
+            
+            // this is the range of the selection
             var range = selection.getRangeAt(0);
 
-            // clone contents but we need the first element to have the same styling and class as the parent
+            // this is a clone of the contents, so we can observe it
             var clone = range.cloneContents();
-            
-            // check if first node is element or text or if it's a single node
-            
-            if (clone.childNodes[0] && clone.childNodes.length === 1) {
-                // if it's text, put it in a div with the same class name and styling as the parent
-                console.log("here")
-                // clone the parent without using cloneNode because it doesn't work
-                var parent = (range.commonAncestorContainer.parentElement as HTMLElement);
-                var newParent = document.createElement(parent.tagName);
-                newParent.className = parent.className;
-                newParent.dataset.key = parent.dataset.key;
-                
-                // add the whole clone to the parent clone
-                newParent.appendChild(clone);
 
-                console.log(newParent);
-                
-            } else if ( clone.childNodes[0] && clone.childNodes[0].nodeType === Node.TEXT_NODE) {
-                // clone the parent without using cloneNode because it doesn't work
-                var parent = (range.commonAncestorContainer as HTMLElement);
-                var newParent = document.createElement(parent.tagName);
-                newParent.className = parent.className;
-                newParent.dataset.key = parent.dataset.key;
-                
-                // add the whole clone to the parent clone
-                newParent.appendChild(clone);
+            // make copy of clone and set to clone
+            clone = (clone.cloneNode(true) as DocumentFragment);
+            // this is the parent of element that the selection is in
+            var firstParent = (range.commonAncestorContainer);
 
-                console.log(newParent);
+            if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
+                firstParent = range.commonAncestorContainer.parentElement as HTMLElement;
             } else {
-                console.log(clone);
+                firstParent = firstParent as HTMLElement;
             }
+
+            // cloning the parent so we don't affect the original
+            // var cloneParent = firstParent.cloneNode(true) as HTMLElement;
+            // rewrite above without using cloneNode
+            var cloneParent = document.createElement((firstParent as HTMLElement).tagName);
+            cloneParent.innerHTML = (firstParent as HTMLElement).innerHTML;
+            cloneParent.dataset.key = (firstParent as HTMLElement).dataset.key;
+
+            // put the variable clone in the parent
+            cloneParent.innerHTML = "";
+            cloneParent.appendChild(clone);
+
+            // this is an array of all of the parents, I've added the common ancestor container to the start
+            var parents: HTMLElement[] = [(firstParent as HTMLElement)];
+
+            // this checks if the next parent is the editor element, if it is, it stops
+            while (!parents[parents.length - 1].parentElement.classList.contains("editorMain")) {
+                // add the parent to the array
+                parents.push(parents[parents.length - 1].parentElement);
+            }
+
+
+            var finalParent; 
+            // now we need to put each parent inside the next parent
+            // this is done by looping through the parents array
+            for (var i = 0; i < parents.length - 1; i++) {
+                // get the current parent
+                var parent = parents[i];
+
+                var cloneCurrentParent = document.createElement(parent.tagName);
+                cloneCurrentParent.dataset.key = parent.dataset.key;
+
+                // get the next parent
+                var nextParent = parents[i + 1];
+
+                var cloneNextParent = document.createElement(nextParent.tagName);
+                cloneNextParent.dataset.key = nextParent.dataset.key;
+                
+                // put the current parent inside the next parent
+                cloneNextParent.appendChild(cloneCurrentParent);
+                // set the final parent to the last parent
+                finalParent = cloneNextParent;
+
+            }
+
+            // now we have the parent with the selection inside it, log it
+            console.log(finalParent);
+            
         };
 
         return this.element;
