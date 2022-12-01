@@ -118,91 +118,97 @@ class Editor {
             content: this.renderedData["1"]
         }).generateElement(location);
 
-        // this is for selection via the mouse
-        this.element.onmouseup = (event) => {
-
-            // get the selected text
-            var selection = window.getSelection();
-
-            // this is the range of the selection
-            var range = selection.getRangeAt(0);
-
-            // this is a clone of the contents, so we can observe it
-            var clone = range.cloneContents();
-
-            // loop through the children of the clone
-            for (var i = 0; i < clone.children.length; i++) {
-                // get the child
-                var child = (clone.children[i] as HTMLElement);
-
-                 // if it's a text node, return
-                if (child.nodeType === Node.TEXT_NODE) return;
-
-                // get the key from the child
-                var key = child.dataset.key;
-
-                // for the sake of keeping a note of the selection, we'll add a dataset property
-                child.dataset.selected = "true";
-
-                // check if element is entirely selected
-                var actualElement = this.renderedData[key];
-                if (actualElement.textContent != child.textContent) {
-                    child.dataset.partial = "true"; // if an element doesn't have this data attribute, it's the whole thing
-                }
+        // this is for handling new input
+        this.element.onkeydown = (e) => {
+            // if control B or I is pressed, return false (don't allow the browser to handle it)
+            if ((e.ctrlKey || e.metaKey) && (e.key == "b" || e.key == "i")) {
+                e.preventDefault();
+                return false;
             }
-
-            // this is the parent of element that the selection is in
-            var firstParent = (range.commonAncestorContainer);
-
-            // if the selection ancestor is just text, we want to get the parent
-            if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
-                firstParent = range.commonAncestorContainer.parentElement as HTMLElement;
-            }
-
-            // this will store the final element (at the highest level)
-            var finalElement;
-
-            // get all parents before .editorMain and wrap them around the clone
-            while (firstParent && (firstParent as HTMLElement).classList && !(firstParent as HTMLElement).classList.contains("editorMain")) {
-                // this clones the element (not using cloneNode because we don't want to clone the children)
-                var newParent = document.createElement((firstParent as HTMLElement).tagName); // making a new element using the tag of the parent
-                newParent.dataset.key = (firstParent as HTMLElement).dataset.key; // got to keep the key
-                
-                
-
-                // set newParent classList to the firstParent classList
-                (firstParent as HTMLElement).classList.forEach((className) => {
-                    newParent.classList.add(className);
-                });
-
-                // for now, colour is the only style that needs to be copied
-                (newParent).style.color = (firstParent as HTMLElement).style.color;
-                
-
-                // if we've already wrapped the first element, we don't want to wrap it again, wrap the previous element instead
-                var thingToAppend = finalElement ? finalElement : clone;
-                newParent.appendChild(thingToAppend);
-
-                // get the actual element on the page to check if we have the whole thing
-                // or just a part of it
-                var actualElement = this.renderedData[(firstParent as HTMLElement).dataset.key];
-                if (actualElement.textContent != newParent.textContent) {
-                    newParent.dataset.partial = "true"; // if an element doesn't have this data attribute, it's the whole thing
-                }
-
-                // set the final element to the new parent
-                finalElement = (newParent);
-
-                // pass up the tree
-                firstParent = firstParent.parentElement;
-            }
-
-            // this will print the final element
-            console.log(finalElement);
-        };
+            return false;
+        }
 
         return this.element;
     }
+
+    getSelection() {
+        // get the selected text
+        var selection = window.getSelection();
+
+        // this is the range of the selection
+        var range = selection.getRangeAt(0);
+
+        // this is a clone of the contents, so we can observe it
+        var clone = range.cloneContents();
+
+        // loop through the children of the clone
+        for (var i = 0; i < clone.children.length; i++) {
+            // get the child
+            var child = (clone.children[i] as HTMLElement);
+
+            // if it's a text node, return
+            if (child.nodeType === Node.TEXT_NODE) return;
+
+            // get the key from the child
+            var key = child.dataset.key;
+
+            // for the sake of keeping a note of the selection, we'll add a dataset property
+            child.dataset.selected = "true";
+
+            // check if element is entirely selected
+            var actualElement = this.renderedData[key];
+            if (actualElement.textContent != child.textContent) {
+                child.dataset.partial = "true"; // if an element doesn't have this data attribute, it's the whole thing
+            }
+        }
+
+        // this is the parent of element that the selection is in
+        var firstParent = (range.commonAncestorContainer);
+
+        // if the selection ancestor is just text, we want to get the parent
+        if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
+            firstParent = range.commonAncestorContainer.parentElement as HTMLElement;
+        }
+
+        // this will store the final element (at the highest level)
+        var finalElement;
+
+        // get all parents before .editorMain and wrap them around the clone
+        while (firstParent && (firstParent as HTMLElement).classList && !(firstParent as HTMLElement).classList.contains("editorMain")) {
+            // this clones the element (not using cloneNode because we don't want to clone the children)
+            var newParent = document.createElement((firstParent as HTMLElement).tagName); // making a new element using the tag of the parent
+            newParent.dataset.key = (firstParent as HTMLElement).dataset.key; // got to keep the key
+
+            // set newParent classList to the firstParent classList
+            (firstParent as HTMLElement).classList.forEach((className) => {
+                newParent.classList.add(className);
+            });
+
+            // for now, colour is the only style that needs to be copied
+            (newParent).style.color = (firstParent as HTMLElement).style.color;
+
+            // if we've already wrapped the first element, we don't want to wrap it again, wrap the previous element instead
+            var thingToAppend = finalElement ? finalElement : clone;
+            newParent.appendChild(thingToAppend);
+
+            // get the actual element on the page to check if we have the whole thing
+            // or just a part of it
+            var actualElement = this.renderedData[(firstParent as HTMLElement).dataset.key];
+            if (actualElement.textContent != newParent.textContent) {
+                newParent.dataset.partial = "true"; // if an element doesn't have this data attribute, it's the whole thing
+            }
+
+            // set the final element to the new parent
+            finalElement = (newParent);
+
+            // pass up the tree
+            firstParent = firstParent.parentElement;
+        }
+
+        // this will return the final element
+        return finalElement;
+    }
+
 
     public constructor({
 
