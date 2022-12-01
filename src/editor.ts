@@ -8,14 +8,14 @@ interface EditorElements {
     [key: string]: { // below are the attributes of the editor elements
         text: string; // styling will be an array of specific strings
         styling?: ( // stylings (from SC 10.4)
-            `colour-${string}`|
-            "bold"|
-            "italic"|
-            "subscript"|
-            "superscript"|
+            `colour-${string}` |
+            "bold" |
+            "italic" |
+            "subscript" |
+            "superscript" |
             "normal"
         )[],
-    }; 
+    };
 }
 
 
@@ -61,16 +61,16 @@ class Editor {
     // This function is used to render the editor
     public generateElement(location: string): HTMLElement {
 
-        
+
 
         // loop through the data and render it
         Object.keys(this.data).forEach((key) => {
             // create span using inbuilt functions, fill with text, add to this.renderedData
             var span = document.createElement("span");
-            
+
             // Adding the id to the span as a dataset property so we can keep track
             span.dataset.key = key
-            
+
             var elemInfo = this.data[key]
             span.innerText = elemInfo.text;
             // add a class so I can specifically style the note spans
@@ -94,7 +94,7 @@ class Editor {
 
         // loop through the data and replace the placeholders with the rendered data
         Object.keys(this.renderedData).forEach((key) => {
-            
+
             var text = this.renderedData[key].innerHTML;
 
             // find any placeholders, replace them with the rendered data
@@ -120,51 +120,92 @@ class Editor {
 
         // this is for selection via the mouse
         this.element.onmouseup = (event) => {
-            
+
             // get the selected text
             var selection = window.getSelection();
-            
+
             // this is the range of the selection
             var range = selection.getRangeAt(0);
 
             // this is a clone of the contents, so we can observe it
             var clone = range.cloneContents();
 
-            console.log(clone);
-            // make copy of clone and set to clone
-            clone = (clone.cloneNode(true) as DocumentFragment);
+            // loop through the children of the clone
+            for (var i = 0; i < clone.children.length; i++) {
+                // get the child
+                var child = (clone.children[i] as HTMLElement);
+
+                 // if it's a text node, return
+                if (child.nodeType === Node.TEXT_NODE) return;
+
+                // get the key from the child
+                var key = child.dataset.key;
+
+                // for the sake of keeping a note of the selection, we'll add a dataset property
+                child.dataset.selected = "true";
+
+                // check if element is entirely selected
+                var actualElement = this.renderedData[key];
+                if (actualElement.textContent != child.textContent) {
+                    child.dataset.partial = "true"; // if an element doesn't have this data attribute, it's the whole thing
+                }
+            }
+
             // this is the parent of element that the selection is in
             var firstParent = (range.commonAncestorContainer);
 
+            // if the selection ancestor is just text, we want to get the parent
             if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
                 firstParent = range.commonAncestorContainer.parentElement as HTMLElement;
-            } else {
-                firstParent = firstParent as HTMLElement;
             }
 
-            var newClone;
+            // this will store the final element (at the highest level)
+            var finalElement;
 
-            // get all parents until .editorMain and wrap them around the clone
+            // get all parents before .editorMain and wrap them around the clone
             while (firstParent && (firstParent as HTMLElement).classList && !(firstParent as HTMLElement).classList.contains("editorMain")) {
-                var newParent = document.createElement((firstParent as HTMLElement).tagName);
-                newParent.dataset.key = (firstParent as HTMLElement).dataset.key;
-                var thingToAppend = newClone ? newClone : clone;
+                // this clones the element (not using cloneNode because we don't want to clone the children)
+                var newParent = document.createElement((firstParent as HTMLElement).tagName); // making a new element using the tag of the parent
+                newParent.dataset.key = (firstParent as HTMLElement).dataset.key; // got to keep the key
+                
+                
+
+                // set newParent classList to the firstParent classList
+                (firstParent as HTMLElement).classList.forEach((className) => {
+                    newParent.classList.add(className);
+                });
+
+                // for now, colour is the only style that needs to be copied
+                (newParent).style.color = (firstParent as HTMLElement).style.color;
+                
+
+                // if we've already wrapped the first element, we don't want to wrap it again, wrap the previous element instead
+                var thingToAppend = finalElement ? finalElement : clone;
                 newParent.appendChild(thingToAppend);
-                newClone = (newParent);
+
+                // get the actual element on the page to check if we have the whole thing
+                // or just a part of it
+                var actualElement = this.renderedData[(firstParent as HTMLElement).dataset.key];
+                if (actualElement.textContent != newParent.textContent) {
+                    newParent.dataset.partial = "true"; // if an element doesn't have this data attribute, it's the whole thing
+                }
+
+                // set the final element to the new parent
+                finalElement = (newParent);
+
+                // pass up the tree
                 firstParent = firstParent.parentElement;
             }
 
-            console.log(newClone);
-
-
-            
+            // this will print the final element
+            console.log(finalElement);
         };
 
         return this.element;
     }
 
     public constructor({
-        
+
     }) {
         console.log("Editor initialised");
     }
