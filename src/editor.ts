@@ -3,18 +3,21 @@
 import MyElement from "./elementTypes/MyElement";
 import { State, StringDict } from "./helpers";
 
+// move EditorElements styling to its own type
+type EditorElementStyling = ( // stylings (from SC 10.4)
+    `colour-${string}` |
+    "bold" |
+    "italic" |
+    "subscript" |
+    "superscript" |
+    "normal"
+)[];
+
 // this is the interface for the editor elements
 interface EditorElements {
     [key: string]: { // below are the attributes of the editor elements
         text: string; // styling will be an array of specific strings
-        styling?: ( // stylings (from SC 10.4)
-            `colour-${string}` |
-            "bold" |
-            "italic" |
-            "subscript" |
-            "superscript" |
-            "normal"
-        )[],
+        styling?: EditorElementStyling;
     };
 }
 
@@ -118,6 +121,9 @@ class Editor {
             content: this.renderedData["1"]
         }).generateElement(location);
 
+        // make a new variable for the timeout
+        var timeout: ReturnType<typeof setTimeout>;
+        
         // this is for handling new input
         this.element.onkeydown = (e) => {
             // if control B or I is pressed, return false (don't allow the browser to handle it)
@@ -125,10 +131,83 @@ class Editor {
                 e.preventDefault();
                 return false;
             }
-            return false;
+
+            // log the time in HH:MM:SS
+            console.log(new Date().toLocaleTimeString());
+
+            // cancel timeout if it exists
+            if (timeout) clearTimeout(timeout);
+
+            // set timeout to 1 second
+            timeout = setTimeout(() => {
+                console.log(new Date().toLocaleTimeString() + " Timeout")
+                this.recompose();
+            }, 1000);
         }
 
         return this.element;
+    }
+
+    recompose() {
+        // we are remaking the data for the variable this.element
+        // using the innerHTML of this.element
+
+        // get the spans
+        var spans = this.element.querySelectorAll("span");
+
+        var newData: EditorElements = {};
+
+        // loop through the spans
+        spans.forEach((span) => {
+            // get the key
+            var key = span.dataset.key;
+            // get the text
+            var text;
+
+            // we want the innerText but if it contains any other element spans, we want to replace them with placeholders
+            if (span.innerHTML.includes("<")) {
+                // get the innerHTML
+                var temp = span.innerHTML;
+                // get the inner spans
+                var innerSpans = span.querySelectorAll("span");
+                // loop through the inner spans
+                innerSpans.forEach((innerSpan) => {
+                    // replace the innerHTML with the placeholder
+                    temp = temp.replace(innerSpan.outerHTML, `{${innerSpan.dataset.key}}`);
+                });
+                // set the text to the temp
+                text = temp;
+            } else {
+                // if it doesn't contain any other spans, just get the innerText
+                text = span.innerText;
+            }
+
+            // get the styling
+            var styling = span.classList;
+
+            // make sure styling only contains strings from the EditorElementStyling type
+            var stylingArray: EditorElementStyling = [];
+
+            // filter styling in accord to EditorElementStyling
+
+            styling.forEach((style) => {
+                // if style is matches EditorElementStyling
+
+                if (style == "bold" || style == "italic" || style == "subscript" || style == "superscript" || style == "normal") {
+                    stylingArray.push(style as EditorElementStyling[1]);
+                }
+            });
+
+            if (span.style.color) stylingArray.push(`colour-${span.style.color}` as EditorElementStyling[0]);
+
+            // add the data to the data
+            newData[key] = {
+                text: text,
+                styling: stylingArray
+            }
+        });
+
+        console.log(newData);
     }
 
     getSelection() {
