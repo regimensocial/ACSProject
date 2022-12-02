@@ -149,19 +149,23 @@ class Editor {
     }
 
     recompose() {
-        // we are remaking the data for the variable this.element
-        // using the innerHTML of this.element
+        // we are going to remake the data for the variable this.element using the innerHTML of this.element
 
-        // get the spans
-        var spans = this.element.querySelectorAll("span");
+        //  as NodeListOf<HTMLSpanElement>
 
+        // get the element spans
+        var spans = this.element.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
+
+        // temporary data object which will be used to create the new data
         var newData: EditorElements = {};
 
         // loop through the spans
         spans.forEach((span) => {
+
             // get the key
             var key = span.dataset.key;
-            // get the text
+
+            // new variable for the text
             var text;
 
             // we want the innerText but if it contains any other element spans, we want to replace them with placeholders
