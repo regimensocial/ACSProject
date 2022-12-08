@@ -3,15 +3,14 @@
 import MyElement from "./elementTypes/MyElement";
 import { State, StringDict } from "./helpers";
 
-// move EditorElements styling to its own type
-type EditorElementStyling = ( // stylings (from SC 10.4)
-    `colour-${string}` |
-    "bold" |
-    "italic" |
-    "subscript" |
-    "superscript" |
-    "normal"
-)[];
+// stylings (from SC 10.4)
+const ALL_STYLINGS = ['bold', 'italic', 'subscript', 'superscript', 'normal'] as const;
+// this variable is used to type the styling of the editor elements
+// and for comparisons
+type StylingTuple = typeof ALL_STYLINGS | `colour-${string}`;
+
+// this is the actual type of the styling, it's an array of strings
+type EditorElementStyling = StylingTuple[number][];
 
 // this is the interface for the editor elements
 interface EditorElements {
@@ -32,7 +31,8 @@ class Editor {
     }
 
     // This implements the EditorElements interface
-    private data: EditorElements = {
+    // It is used to store the data for the editor
+    private _data: EditorElements = {
         "1": {
             text: "The quick {2} the lazy dog.",
         },
@@ -59,22 +59,27 @@ class Editor {
         }
     }
 
+    // this will set our data and re-render the editor
+    private set data(data: EditorElements) {
+        // set the data
+        this._data = data;
+        // now render the editor
+        this.render();
+    }
+
     private renderedData: State = {};
 
     // This function is used to render the editor
-    public generateElement(location: string): HTMLElement {
-
-
-
+    private render(location?: string): void {
         // loop through the data and render it
-        Object.keys(this.data).forEach((key) => {
+        Object.keys(this._data).forEach((key) => {
             // create span using inbuilt functions, fill with text, add to this.renderedData
             var span = document.createElement("span");
 
             // Adding the id to the span as a dataset property so we can keep track
             span.dataset.key = key
 
-            var elemInfo = this.data[key]
+            var elemInfo = this._data[key]
             span.innerText = elemInfo.text;
             // add a class so I can specifically style the note spans
             span.classList.add("element");
@@ -93,8 +98,6 @@ class Editor {
             this.renderedData[key] = span;
         });
 
-        console.log(this.renderedData);
-
         // loop through the data and replace the placeholders with the rendered data
         Object.keys(this.renderedData).forEach((key) => {
 
@@ -110,20 +113,69 @@ class Editor {
 
         });
 
-        // generate element from the rendered data
-        // render into provided location
-        this.element = new MyElement({
-            className: "editorMain",
-            type: "div",
-            attributes: {
-                contentEditable: "true",
-            },
-            content: this.renderedData["1"]
-        }).generateElement(location);
+        // if we have a location, render into that
+        if (location) {
+            // generate element from the rendered data
+            // render into provided location
+            this.element = new MyElement({
+                className: "editorMain",
+                type: "div",
+                attributes: {
+                    contentEditable: "true",
+                },
+                content: Object.values(this.renderedData)[0] // the first element is the main element
+            }).generateElement(location);
+        } else if (this.element) { // if not, render into this.element if it exists
+            // generate element from the rendered data
+            // render into this.element
+            console.log("we did this one")
+            // set the innerHTML to the first element in the rendered data
+            this.element.innerHTML = Object.values(this.renderedData)[0].outerHTML;
+        } else { // if not, throw an error
+            throw new Error("No location provided and no element to render into");
+        }
+
+
+        // this.selectionStart is the index we want the caret to be at
+        // this.element is the contenteditable element
+        if (this.selectionStart) {
+            // We need to set the selection to the correct position
+            
+            // get the selection
+            var selection = window.getSelection();
+            // create a range
+            var range = document.createRange();
+
+            // set the range to the correct position
+            range.setStart(this.element.childNodes[0], this.selectionStart); // error here
+            range.setEnd(this.element.childNodes[0], this.selectionStart);
+
+            // apparently this is needed
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+        }
+
+
+    }
+
+    // returns the data
+    public get data(): EditorElements {
+        return this._data;
+    }
+
+
+    private selectionStart: number = 0;
+
+    // This function is used to render the editor
+    public generateElement(location: string): HTMLElement {
+
+        this.render(location);
 
         // make a new variable for the timeout
         var timeout: ReturnType<typeof setTimeout>;
-        
+
         // this is for handling new input
         this.element.onkeydown = (e) => {
             // if control B or I is pressed, return false (don't allow the browser to handle it)
@@ -131,6 +183,16 @@ class Editor {
                 e.preventDefault();
                 return false;
             }
+
+            // get selection index (on this.element)
+            var selection = window.getSelection();
+            var range = selection.getRangeAt(0);
+            var preSelectionRange = range.cloneRange();
+            preSelectionRange.selectNodeContents(this.element);
+            preSelectionRange.setEnd(range.startContainer, range.startOffset);
+            var start = preSelectionRange.toString().length;
+
+            this.selectionStart = (start);
 
             // log the time in HH:MM:SS
             console.log(new Date().toLocaleTimeString());
@@ -153,11 +215,14 @@ class Editor {
 
         //  as NodeListOf<HTMLSpanElement>
 
-        // get the element spans
+        // get the element spans as a NodeListOf
         var spans = this.element.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
 
         // temporary data object which will be used to create the new data
         var newData: EditorElements = {};
+
+        // this is where excess elements will be flagged
+        var excessElements: string[] = [];
 
         // loop through the spans
         spans.forEach((span) => {
@@ -165,53 +230,106 @@ class Editor {
             // get the key
             var key = span.dataset.key;
 
-            // new variable for the text
-            var text;
-
-            // we want the innerText but if it contains any other element spans, we want to replace them with placeholders
-            if (span.innerHTML.includes("<")) {
-                // get the innerHTML
-                var temp = span.innerHTML;
-                // get the inner spans
-                var innerSpans = span.querySelectorAll("span");
-                // loop through the inner spans
-                innerSpans.forEach((innerSpan) => {
-                    // replace the innerHTML with the placeholder
-                    temp = temp.replace(innerSpan.outerHTML, `{${innerSpan.dataset.key}}`);
-                });
-                // set the text to the temp
-                text = temp;
-            } else {
-                // if it doesn't contain any other spans, just get the innerText
-                text = span.innerText;
-            }
+            // get the innerHTML
+            var text = span.innerHTML;
 
             // get the styling
             var styling = span.classList;
 
-            // make sure styling only contains strings from the EditorElementStyling type
-            var stylingArray: EditorElementStyling = [];
+            // get any inner spans (not nested)
+            var innerSpans = span.querySelectorAll(":scope > span") as NodeListOf<HTMLSpanElement>
 
-            // filter styling in accord to EditorElementStyling
-
-            styling.forEach((style) => {
-                // if style is matches EditorElementStyling
-
-                if (style == "bold" || style == "italic" || style == "subscript" || style == "superscript" || style == "normal") {
-                    stylingArray.push(style as EditorElementStyling[1]);
-                }
+            // if there are any inner spans, replace the innerHTML with the placeholder
+            if (innerSpans.length) innerSpans.forEach((innerSpan) => {
+                // replace the innerHTML with the placeholder
+                text = text.replace(innerSpan.outerHTML, `{${innerSpan.dataset.key}}`);
             });
 
-            if (span.style.color) stylingArray.push(`colour-${span.style.color}` as EditorElementStyling[0]);
+            // replace any &nbsp; with a space
+            text = text.replace(/&nbsp;/g, " ");
 
-            // add the data to the data
+            // new variable for the styling array, this will be used to create the new data
+            var stylingArray: string[] = [];
+
+            // loop through the styling and only add the ones that are in the EditorElementStyling type
+            styling.forEach((style) => {
+                // if style matches ALL_STYLINGS
+                if (ALL_STYLINGS.includes(style as any)) {
+                    stylingArray.push(style);
+                }
+
+                // handle colouring separately
+                if (span.style.color) stylingArray.push("colour-" + span.style.color);
+            });
+
+            console.log(stylingArray);
+
+            // check if the text contains any placeholders
+            if (innerSpans.length === 1) {
+                // check if text only contains a placeholder by replacing the brackets and checking if it's a key
+                var potentialKey = text.replace("{", "").replace("}", "").trim();
+
+                // if so, add the key of THIS element to the excessElements array
+                // we'll deal with the other element later
+                if (Object.keys(this._data).includes(potentialKey)) excessElements.push(key);
+            }
+
+            // add the text to the data at the key
             newData[key] = {
                 text: text,
-                styling: stylingArray
+                styling: (stylingArray)
             }
         });
 
-        console.log(newData);
+        // if (!element) { 
+        //     delete newData[key]; 
+        //     return; 
+        // };
+
+        console.log(JSON.parse(JSON.stringify(newData)))
+        // check if there are any excess elements
+        if (excessElements.length) {
+            // loop through the excess elements
+            excessElements.forEach((key) => {
+                // get the element
+                var element = newData[key];
+
+                // if the element doesn't exist, return
+                if (!element) return;
+
+                // get the text 
+                var text = element.text;
+
+                // so we can get the key of the other element
+                var mergeKey = text.replace("{", "").replace("}", "").trim();
+
+                // get the other element
+                var mergeElement = newData[mergeKey];
+
+                // get the styling of the other element
+                var mergeStyling = mergeElement.styling;
+
+                // if mergeElement has normal and element has bold, remove bold from element
+                if (mergeStyling.includes("normal") && element.styling.includes("bold")) {
+                    element.styling.splice(element.styling.indexOf("bold"), 1);
+                }
+
+                // get the text of the element that is being merged
+                var mergeText = mergeElement.text;
+
+                // add the styling of the element that is being merged to the element
+                element.styling = element.styling.concat(mergeStyling);
+
+                // add the text of the element that is being merged to the element
+                element.text = element.text.replace(`{${mergeKey}}`, mergeText);
+
+                // delete the element that is being merged
+                delete newData[mergeKey];
+
+            });
+        }
+
+        this.data = (newData);
     }
 
     getSelection() {
