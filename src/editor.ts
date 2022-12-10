@@ -4,7 +4,7 @@ import MyElement from "./elementTypes/MyElement";
 import { State, StringDict } from "./helpers";
 
 // stylings (from SC 10.4)
-const ALL_STYLINGS = ['bold', 'italic', 'subscript', 'superscript', 'normal'] as const;
+const ALL_STYLINGS = ['bold', 'italic', 'subscript', 'superscript', 'normal', 'selected'] as const;
 // this variable is used to type the styling of the editor elements
 // and for comparisons
 type StylingTuple = typeof ALL_STYLINGS | `colour-${string}`;
@@ -69,8 +69,38 @@ class Editor {
 
     private renderedData: State = {};
 
+
+    private setupSelection(): void {
+        // clear selection
+
+        this.element.querySelectorAll(".selected").forEach((elem) => {
+            elem.classList.remove("selected");
+        });
+
+        // set the selection index to -1
+        // 0 would be valid, so -1 means nothing is selected
+        this.selectionIndex = -1;
+
+        // get element selected by the cursor
+        var selectedElement = document.getSelection().anchorNode.parentElement;
+
+        // make sure there is an element selected
+        if (selectedElement) {
+            // add the selected class to the selected element
+            selectedElement.classList.add("selected");
+
+            // set the selection index to the offset of the cursor
+            this.selectionIndex = document.getSelection().anchorOffset;
+
+            console.log(selectedElement, this.selectionIndex);
+        }
+    }
+
     // This function is used to render the editor
     private render(location?: string): void {
+
+        if (this.element) this.element.contentEditable = "false";
+
         // loop through the data and render it
         Object.keys(this._data).forEach((key) => {
             // create span using inbuilt functions, fill with text, add to this.renderedData
@@ -136,24 +166,33 @@ class Editor {
         }
 
 
-        // this.selectionStart is the index we want the caret to be at
-        // this.element is the contenteditable element
-        if (this.selectionStart) {
-            // We need to set the selection to the correct position
-            
-            // get the selection
-            var selection = window.getSelection();
-            // create a range
+        this.element.contentEditable = "true";
+        // make sure there is a selection
+        if (this.selectionIndex > -1) {
+            // get the element with the selected class
+            var selectedElement = this.element.querySelector(".selected") as HTMLElement;
+            if (!selectedElement) { // this shouldn't really happen, but if it does, reset the selection
+                this.selectionIndex = -1;
+                return;
+            }
+
+            // we have to use a range to set the selection
             var range = document.createRange();
 
-            // set the range to the correct position
-            range.setStart(this.element.childNodes[0], this.selectionStart); // error here
-            range.setEnd(this.element.childNodes[0], this.selectionStart);
+            // get selection
+            var sel = window.getSelection();
 
-            // apparently this is needed
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
+            // setting the start of the index to the selection index
+            // using the first child (the text content)
+            range.setStart(selectedElement.childNodes[0], this.selectionIndex);
+
+            this.element.querySelectorAll(".selected").forEach((elem) => {
+                elem.classList.remove("selected");
+            });
+
+            range.collapse(true); // collapse range to start
+            sel.removeAllRanges(); // remove any incorrect ranges/selections
+            sel.addRange(range); // add our range to the selection
 
         }
 
@@ -166,7 +205,7 @@ class Editor {
     }
 
 
-    private selectionStart: number = 0;
+    private selectionIndex = -1;
 
     // This function is used to render the editor
     public generateElement(location: string): HTMLElement {
@@ -184,15 +223,8 @@ class Editor {
                 return false;
             }
 
-            // get selection index (on this.element)
-            var selection = window.getSelection();
-            var range = selection.getRangeAt(0);
-            var preSelectionRange = range.cloneRange();
-            preSelectionRange.selectNodeContents(this.element);
-            preSelectionRange.setEnd(range.startContainer, range.startOffset);
-            var start = preSelectionRange.toString().length;
-
-            this.selectionStart = (start);
+            
+            this.setupSelection();
 
             // log the time in HH:MM:SS
             console.log(new Date().toLocaleTimeString());
@@ -202,6 +234,9 @@ class Editor {
 
             // set timeout to 1 second
             timeout = setTimeout(() => {
+
+                this.setupSelection();
+
                 console.log(new Date().toLocaleTimeString() + " Timeout")
                 this.recompose();
             }, 1000);
@@ -212,8 +247,6 @@ class Editor {
 
     recompose() {
         // we are going to remake the data for the variable this.element using the innerHTML of this.element
-
-        //  as NodeListOf<HTMLSpanElement>
 
         // get the element spans as a NodeListOf
         var spans = this.element.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
@@ -329,6 +362,7 @@ class Editor {
             });
         }
 
+        // set the data to the new data
         this.data = (newData);
     }
 

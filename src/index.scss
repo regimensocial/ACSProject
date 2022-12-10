@@ -104,5 +104,7 @@ body {
             }
         }
         outline: none;
+        // prevent white-space from being removed
+        white-space: pre;
     }
 }
