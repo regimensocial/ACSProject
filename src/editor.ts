@@ -70,6 +70,7 @@ class Editor {
     private renderedData: State = {};
 
 
+    // this is so I can repeat or move code
     private setupSelection(): void {
         // clear selection
 
@@ -81,23 +82,45 @@ class Editor {
         // 0 would be valid, so -1 means nothing is selected
         this.selectionIndex = -1;
 
-        // get element selected by the cursor
-        var selectedElement = document.getSelection().anchorNode.parentElement;
+        // get text node selected by the cursor
+        var selectedNode = document.getSelection().anchorNode;
 
-        // make sure there is an element selected
-        if (selectedElement) {
-            // add the selected class to the selected element
-            selectedElement.classList.add("selected");
+        // changed to a guard clause
+        // if there is no selected node, return
+        if (!selectedNode) return;
 
-            // set the selection index to the offset of the cursor
+        // verify the parent doesn't have the selected class
+        if (selectedNode.parentElement.classList.contains("selected")) {
             this.selectionIndex = document.getSelection().anchorOffset;
-
-            console.log(selectedElement, this.selectionIndex);
+            return;
         }
+
+        // store offset before we replace the node
+        this.selectionIndex = document.getSelection().anchorOffset;
+
+        // wrap selected node in a new span
+        var selectedSpan = document.createElement("span");
+
+        // add the selected class to the span, and the element class
+        selectedSpan.classList.add("element", "selected");
+
+        // add the key so it can be recomposed properly
+        selectedSpan.dataset.key = "selection";
+
+        // clone selectedNode (so we can remove it from the DOM)
+        var selectedNodeClone = selectedNode.cloneNode(true);
+
+        // add the clone to the span
+        selectedSpan.appendChild(selectedNodeClone);
+
+        // replace the selected node with the span
+        selectedNode.parentNode.replaceChild(selectedSpan, selectedNode);
+
     }
 
     // This function is used to render the editor
     private render(location?: string): void {
+        
 
         if (this.element) this.element.contentEditable = "false";
 
@@ -184,15 +207,38 @@ class Editor {
 
             // setting the start of the index to the selection index
             // using the first child (the text content)
-            range.setStart(selectedElement.childNodes[0], this.selectionIndex);
-
-            this.element.querySelectorAll(".selected").forEach((elem) => {
-                elem.classList.remove("selected");
-            });
+            var firstChild = selectedElement.childNodes[0];
+            range.setStart(firstChild, this.selectionIndex);
 
             range.collapse(true); // collapse range to start
             sel.removeAllRanges(); // remove any incorrect ranges/selections
             sel.addRange(range); // add our range to the selection
+
+
+            // get the parent of the selected element
+            var parent = selectedElement.parentElement;
+
+            // get the new offset before we replace the element
+            var newOffset = document.getSelection().anchorOffset;
+
+            // replace the selected element with the child
+            parent.replaceChild(firstChild, selectedElement);
+
+            // we're doing this again because the selection is lost when we replace the element
+            // we have to use a range to set the selection
+            range = document.createRange();
+
+            // get selection
+            sel = window.getSelection();
+
+            // set selection start to the new offset
+            range.setStart(firstChild, newOffset);
+
+            range.collapse(true); // collapse range to start
+            sel.removeAllRanges(); // remove any incorrect ranges/selections
+            sel.addRange(range);
+
+            
 
         }
 
@@ -223,8 +269,7 @@ class Editor {
                 return false;
             }
 
-            
-            this.setupSelection();
+
 
             // log the time in HH:MM:SS
             console.log(new Date().toLocaleTimeString());
@@ -235,7 +280,6 @@ class Editor {
             // set timeout to 1 second
             timeout = setTimeout(() => {
 
-                this.setupSelection();
 
                 console.log(new Date().toLocaleTimeString() + " Timeout")
                 this.recompose();
@@ -246,6 +290,10 @@ class Editor {
     }
 
     recompose() {
+
+        // set up selection on recomposition
+        this.setupSelection();
+        
         // we are going to remake the data for the variable this.element using the innerHTML of this.element
 
         // get the element spans as a NodeListOf
@@ -314,16 +362,11 @@ class Editor {
             }
         });
 
-        // if (!element) { 
-        //     delete newData[key]; 
-        //     return; 
-        // };
-
-        console.log(JSON.parse(JSON.stringify(newData)))
         // check if there are any excess elements
         if (excessElements.length) {
             // loop through the excess elements
             excessElements.forEach((key) => {
+
                 // get the element
                 var element = newData[key];
 
@@ -362,7 +405,9 @@ class Editor {
             });
         }
 
+        console.log(newData)
         // set the data to the new data
+        // this calls render
         this.data = (newData);
     }
 
