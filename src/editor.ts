@@ -4,7 +4,7 @@ import MyElement from "./elementTypes/MyElement";
 import { State, StringDict } from "./helpers";
 
 // stylings (from SC 10.4)
-const ALL_STYLINGS = ['bold', 'italic', 'subscript', 'superscript', 'normal', 'selected'] as const;
+const ALL_STYLINGS = ['bold', 'italic', 'subscript', 'superscript', 'normal', 'selected', 'selectedEnd'] as const;
 // this variable is used to type the styling of the editor elements
 // and for comparisons
 type StylingTuple = typeof ALL_STYLINGS | `colour-${string}`;
@@ -80,23 +80,26 @@ class Editor {
 
         // set the selection index to -1
         // 0 would be valid, so -1 means nothing is selected
-        this.selectionIndex = -1;
+        this.selectionIndex[0] = -1;
 
         // get text node selected by the cursor
         var selectedNode = document.getSelection().anchorNode;
 
+        // get end node
+        var endNode = document.getSelection().focusNode;
+
+        
         // changed to a guard clause
         // if there is no selected node, return
         if (!selectedNode) return;
 
-        // verify the parent doesn't have the selected class
-        if (selectedNode.parentElement.classList.contains("selected")) {
-            this.selectionIndex = document.getSelection().anchorOffset;
-            return;
-        }
+        // get the range of the selection
+        var range = window.getSelection().getRangeAt(0)
 
         // store offset before we replace the node
-        this.selectionIndex = document.getSelection().anchorOffset;
+        this.selectionIndex[0] = range.startOffset;
+        this.selectionIndex[1] = range.endOffset;
+
 
         // wrap selected node in a new span
         var selectedSpan = document.createElement("span");
@@ -115,6 +118,30 @@ class Editor {
 
         // replace the selected node with the span
         selectedNode.parentNode.replaceChild(selectedSpan, selectedNode);
+
+        // if the end node is different, we need to do the same thing
+        if (endNode != selectedNode) {
+            // store offset before we replace the node
+            this.selectionIndex[1] = document.getSelection().focusOffset;
+
+            // wrap selected node in a new span
+            var endSpan = document.createElement("span");
+
+            // add the selected class to the span, and the element class
+            endSpan.classList.add("element", "selectedEnd");
+
+            // add the key so it can be recomposed properly
+            endSpan.dataset.key = "selectionEnd";
+
+            // clone selectedNode (so we can remove it from the DOM)
+            var endNodeClone = endNode.cloneNode(true);
+
+            // add the clone to the span
+            endSpan.appendChild(endNodeClone);
+
+            // replace the selected node with the span
+            endNode.parentNode.replaceChild(endSpan, endNode);
+        }
 
     }
 
@@ -191,11 +218,19 @@ class Editor {
 
         this.element.contentEditable = "true";
         // make sure there is a selection
-        if (this.selectionIndex > -1) {
+        if (this.selectionIndex[0] > -1) {
             // get the element with the selected class
             var selectedElement = this.element.querySelector(".selected") as HTMLElement;
+            var selectedEndElement = this.element.querySelector(".selectedEnd") as HTMLElement;
+
+            console.log(selectedEndElement)
+
+
+            // if the end element is null, set it to the start element (the selection is only one element)
+            if (!selectedEndElement) selectedEndElement = selectedElement;
+
             if (!selectedElement) { // this shouldn't really happen, but if it does, reset the selection
-                this.selectionIndex = -1;
+                this.selectionIndex[0] = -1;
                 return;
             }
 
@@ -208,21 +243,36 @@ class Editor {
             // setting the start of the index to the selection index
             // using the first child (the text content)
             var firstChild = selectedElement.childNodes[0];
-            range.setStart(firstChild, this.selectionIndex);
+            var firstEndChild = selectedEndElement.childNodes[0];
+            range.setStart(firstChild, this.selectionIndex[0]);
+            // range.setEnd(firstEndChild, this.selectionIndex[1]);
+            
+
+            console.log(this.selectionIndex)
 
             range.collapse(true); // collapse range to start
             sel.removeAllRanges(); // remove any incorrect ranges/selections
             sel.addRange(range); // add our range to the selection
 
+            // extend the selection to the end
+            sel.extend(firstChild, this.selectionIndex[1]);
+
 
             // get the parent of the selected element
             var parent = selectedElement.parentElement;
+            var parentEnd = selectedEndElement.parentElement;
 
             // get the new offset before we replace the element
-            var newOffset = document.getSelection().anchorOffset;
+            var newOffset = [document.getSelection().anchorOffset, document.getSelection().focusOffset];
 
             // replace the selected element with the child
             parent.replaceChild(firstChild, selectedElement);
+
+            // if the selected element is not the same as the selected end element, replace it too
+            if (selectedEndElement != selectedElement) {
+                // replace the selected element with the child
+                parentEnd.replaceChild(firstEndChild, selectedEndElement);
+            }
 
             // we're doing this again because the selection is lost when we replace the element
             // we have to use a range to set the selection
@@ -231,12 +281,15 @@ class Editor {
             // get selection
             sel = window.getSelection();
 
-            // set selection start to the new offset
-            range.setStart(firstChild, newOffset);
+            // set selection start and end to the new offset
+            range.setStart(firstChild, newOffset[0]);
 
             range.collapse(true); // collapse range to start
             sel.removeAllRanges(); // remove any incorrect ranges/selections
             sel.addRange(range);
+
+            // extend the selection to the end
+            sel.extend(firstChild, newOffset[1]);
 
             
 
@@ -250,8 +303,8 @@ class Editor {
         return this._data;
     }
 
-
-    private selectionIndex = -1;
+    // now contains two values (start and end)
+    private selectionIndex: [number, number] = [-1, -1];
 
     // This function is used to render the editor
     public generateElement(location: string): HTMLElement {
