@@ -88,7 +88,7 @@ class Editor {
         // get end node
         var endNode = document.getSelection().focusNode;
 
-        
+
         // changed to a guard clause
         // if there is no selected node, return
         if (!selectedNode) return;
@@ -147,7 +147,7 @@ class Editor {
 
     // This function is used to render the editor
     private render(location?: string): void {
-        
+
 
         if (this.element) this.element.contentEditable = "false";
 
@@ -244,9 +244,17 @@ class Editor {
             // using the first child (the text content)
             var firstChild = selectedElement.childNodes[0];
             var firstEndChild = selectedEndElement.childNodes[0];
-            range.setStart(firstChild, this.selectionIndex[0]);
             // range.setEnd(firstEndChild, this.selectionIndex[1]);
-            
+
+            if (firstChild != firstEndChild) {
+                if (firstChild.compareDocumentPosition(firstEndChild) == 2) {
+                    range.setStart(firstEndChild, this.selectionIndex[0]);
+                } else {
+                    range.setStart(firstChild, this.selectionIndex[0]);
+                }
+            } else {
+                range.setStart(firstChild, this.selectionIndex[0]);
+            }
 
             console.log(this.selectionIndex)
 
@@ -255,8 +263,22 @@ class Editor {
             sel.addRange(range); // add our range to the selection
 
             // extend the selection to the end
-            sel.extend(firstChild, this.selectionIndex[1]);
+            // sel.extend(firstChild, this.selectionIndex[1]);
+            
+            // if firstChild is not the same as firstEndChild, extend the selection to the end
+            // but compare which one is first
 
+            if (firstChild != firstEndChild) {
+                if (firstChild.compareDocumentPosition(firstEndChild) == 2) {
+                    sel.extend(firstEndChild, this.selectionIndex[1]);
+                } else {
+                    sel.extend(firstChild, this.selectionIndex[1]);
+                }
+            } else {
+                sel.extend(firstChild, this.selectionIndex[1]);
+            }
+            
+            return
 
             // get the parent of the selected element
             var parent = selectedElement.parentElement;
@@ -289,9 +311,14 @@ class Editor {
             sel.addRange(range);
 
             // extend the selection to the end
-            sel.extend(firstChild, newOffset[1]);
 
-            
+            if (firstChild != firstEndChild) {
+                sel.extend(firstEndChild, newOffset[1]);
+            } else {
+                sel.extend(firstChild, newOffset[1]);
+            }
+
+
 
         }
 
@@ -346,7 +373,7 @@ class Editor {
 
         // set up selection on recomposition
         this.setupSelection();
-        
+
         // we are going to remake the data for the variable this.element using the innerHTML of this.element
 
         // get the element spans as a NodeListOf
