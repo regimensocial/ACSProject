@@ -158,7 +158,9 @@ class Editor {
             span.dataset.key = key
 
             var elemInfo = this._data[key]
-            span.innerText = elemInfo.text;
+
+            // add the text to the span
+            span.innerHTML = elemInfo.text;
             // add a class so I can specifically style the note spans
             span.classList.add("element");
             // iterate through the styling and add the classes (except colour)
@@ -303,6 +305,8 @@ class Editor {
 
         }
 
+        console.log(this.data)
+
 
     }
 
@@ -314,19 +318,31 @@ class Editor {
     // now contains two values (start and end)
     private selectionIndex: [number, number] = [-1, -1];
 
-
+    // this applies a style to the selected text
     private applyStyle(style: string, value?: string) {
+
         if (style == "newline") {
-            // insert text at the current selection
+            // this inserts a newline into the text at the caret
+
+            // get the selection
             var sel = window.getSelection();
             var range = sel.getRangeAt(0);
             range.collapse(true);
-            var br = document.createElement("br");
-            range.insertNode(br);
-            range.setStartAfter(br);
-            range.collapse(true);
+
+            // get the text node
+            var textNode = range.startContainer;
+            var text = textNode.textContent;
+            var offset = range.startOffset;
+
+            // split the text at the offset, and insert a newline 
+            textNode.textContent = text.substring(0, offset) + "\n" + text.substring(offset);
+            range.setStart(textNode, offset + 1);
+
+            // set the selection to the new range
+            range.setEnd(textNode, offset + 1);
             sel.removeAllRanges();
             sel.addRange(range);
+
         }
     }
 
@@ -349,10 +365,9 @@ class Editor {
             }
 
             // if enter is pressed, return false (don't allow the browser to handle it)
-            if (e.key == "Enter" && !e.shiftKey) {
+            if (e.key == "Enter") {
                 e.preventDefault();
                 this.applyStyle("newline");
-                return false;
             }
 
             // cancel timeout if it exists
@@ -368,8 +383,8 @@ class Editor {
     }
 
     recompose() {
-        
-        
+
+
         // set up selection on recomposition
         this.setupSelection();
 
@@ -427,9 +442,14 @@ class Editor {
                 // check if text only contains a placeholder by replacing the brackets and checking if it's a key
                 var potentialKey = text.replace("{", "").replace("}", "").trim();
 
-                // if so, add the key of THIS element to the excessElements array
-                // we'll deal with the other element later
-                if (Object.keys(this._data).includes(potentialKey)) excessElements.push(key);
+                // if any of the keys are due to selection, ignore them
+                if (!(potentialKey == "selection" || potentialKey == "selectionEnd" || (key == "selection") || (key == "selectionEnd"))) {
+                    // if so, add the key of THIS element to the excessElements array
+                    // we'll deal with the other element later
+                    if (Object.keys(this._data).includes(potentialKey)) excessElements.push(key);
+                }
+
+
             }
 
             // add the text to the data at the key
@@ -439,6 +459,7 @@ class Editor {
             }
         });
 
+        console.log(excessElements)
         // check if there are any excess elements
         if (excessElements.length) {
             // loop through the excess elements
