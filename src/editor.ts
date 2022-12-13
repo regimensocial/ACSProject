@@ -121,8 +121,6 @@ class Editor {
 
         // if the end node is different, we need to do the same thing
         if (endNode != selectedNode) {
-            // store offset before we replace the node
-            this.selectionIndex[1] = document.getSelection().focusOffset;
 
             // wrap selected node in a new span
             var endSpan = document.createElement("span");
@@ -208,7 +206,6 @@ class Editor {
         } else if (this.element) { // if not, render into this.element if it exists
             // generate element from the rendered data
             // render into this.element
-            console.log("we did this one")
             // set the innerHTML to the first element in the rendered data
             this.element.innerHTML = Object.values(this.renderedData)[0].outerHTML;
         } else { // if not, throw an error
@@ -217,14 +214,12 @@ class Editor {
 
 
         this.element.contentEditable = "true";
+
         // make sure there is a selection
         if (this.selectionIndex[0] > -1) {
             // get the element with the selected class
             var selectedElement = this.element.querySelector(".selected") as HTMLElement;
             var selectedEndElement = this.element.querySelector(".selectedEnd") as HTMLElement;
-
-            console.log(selectedEndElement)
-
 
             // if the end element is null, set it to the start element (the selection is only one element)
             if (!selectedEndElement) selectedEndElement = selectedElement;
@@ -244,48 +239,41 @@ class Editor {
             // using the first child (the text content)
             var firstChild = selectedElement.childNodes[0];
             var firstEndChild = selectedEndElement.childNodes[0];
-            // range.setEnd(firstEndChild, this.selectionIndex[1]);
 
-            if (firstChild != firstEndChild) {
-                if (firstChild.compareDocumentPosition(firstEndChild) == 2) {
-                    range.setStart(firstEndChild, this.selectionIndex[0]);
-                } else {
-                    range.setStart(firstChild, this.selectionIndex[0]);
-                }
-            } else {
-                range.setStart(firstChild, this.selectionIndex[0]);
+            // if the first child is after the first end child, we need to swap them
+            if (firstChild != firstEndChild && firstChild.compareDocumentPosition(firstEndChild) == 2) {
+                // re order the elements so that the first child is the one that comes first
+                var temp = firstChild;
+                firstChild = firstEndChild;
+                firstEndChild = temp;
+
+                // flip selectedElement and selectedEndElement too 
+                temp = selectedElement;
+                selectedElement = selectedEndElement;
+
+                // this part needed to be casted because it was complaining
+                selectedEndElement = temp as HTMLElement;
             }
 
-            console.log(this.selectionIndex)
+            // set the start of the range to the first child of the selected element
+            range.setStart(firstChild, this.selectionIndex[0]);
 
             range.collapse(true); // collapse range to start
             sel.removeAllRanges(); // remove any incorrect ranges/selections
             sel.addRange(range); // add our range to the selection
 
-            // extend the selection to the end
-            // sel.extend(firstChild, this.selectionIndex[1]);
-            
-            // if firstChild is not the same as firstEndChild, extend the selection to the end
-            // but compare which one is first
-
-            if (firstChild != firstEndChild) {
-                if (firstChild.compareDocumentPosition(firstEndChild) == 2) {
-                    sel.extend(firstEndChild, this.selectionIndex[1]);
-                } else {
-                    sel.extend(firstChild, this.selectionIndex[1]);
-                }
-            } else {
-                sel.extend(firstChild, this.selectionIndex[1]);
-            }
-            
-            return
+            // extend the selection to the end of the selection
+            sel.extend(firstEndChild, this.selectionIndex[1]);
 
             // get the parent of the selected element
             var parent = selectedElement.parentElement;
             var parentEnd = selectedEndElement.parentElement;
 
+            // get the new range of the selection before we replace the element(s)
+            var newRange = document.getSelection().getRangeAt(0);
+
             // get the new offset before we replace the element
-            var newOffset = [document.getSelection().anchorOffset, document.getSelection().focusOffset];
+            var newOffset = [newRange.startOffset, newRange.endOffset];
 
             // replace the selected element with the child
             parent.replaceChild(firstChild, selectedElement);
@@ -311,14 +299,7 @@ class Editor {
             sel.addRange(range);
 
             // extend the selection to the end
-
-            if (firstChild != firstEndChild) {
-                sel.extend(firstEndChild, newOffset[1]);
-            } else {
-                sel.extend(firstChild, newOffset[1]);
-            }
-
-
+            sel.extend(firstEndChild, newOffset[1]);
 
         }
 
@@ -333,6 +314,22 @@ class Editor {
     // now contains two values (start and end)
     private selectionIndex: [number, number] = [-1, -1];
 
+
+    private applyStyle(style: string, value?: string) {
+        if (style == "newline") {
+            // insert text at the current selection
+            var sel = window.getSelection();
+            var range = sel.getRangeAt(0);
+            range.collapse(true);
+            var br = document.createElement("br");
+            range.insertNode(br);
+            range.setStartAfter(br);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }
+
     // This function is used to render the editor
     public generateElement(location: string): HTMLElement {
 
@@ -344,24 +341,25 @@ class Editor {
         // this is for handling new input
         this.element.onkeydown = (e) => {
             // if control B or I is pressed, return false (don't allow the browser to handle it)
-            if ((e.ctrlKey || e.metaKey) && (e.key == "b" || e.key == "i")) {
+            if (
+                (e.ctrlKey || e.metaKey) && (e.key == "b" || e.key == "i")
+            ) {
                 e.preventDefault();
                 return false;
             }
 
-
-
-            // log the time in HH:MM:SS
-            console.log(new Date().toLocaleTimeString());
+            // if enter is pressed, return false (don't allow the browser to handle it)
+            if (e.key == "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                this.applyStyle("newline");
+                return false;
+            }
 
             // cancel timeout if it exists
             if (timeout) clearTimeout(timeout);
 
             // set timeout to 1 second
             timeout = setTimeout(() => {
-
-
-                console.log(new Date().toLocaleTimeString() + " Timeout")
                 this.recompose();
             }, 1000);
         }
@@ -370,7 +368,8 @@ class Editor {
     }
 
     recompose() {
-
+        
+        
         // set up selection on recomposition
         this.setupSelection();
 
@@ -422,8 +421,6 @@ class Editor {
                 // handle colouring separately
                 if (span.style.color) stylingArray.push("colour-" + span.style.color);
             });
-
-            console.log(stylingArray);
 
             // check if the text contains any placeholders
             if (innerSpans.length === 1) {
@@ -484,8 +481,7 @@ class Editor {
 
             });
         }
-
-        console.log(newData)
+        console.log(newData);
         // set the data to the new data
         // this calls render
         this.data = (newData);
