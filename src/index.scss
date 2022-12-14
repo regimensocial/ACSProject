@@ -76,12 +76,15 @@ body {
     }
 }
 
-.editor {
+#editor {
     width: 100%; // We need this for editor to fill the page
     height: 100%; // ditto
+}
 
+.editorParent {
     .editorMain {
         .element { // stylings here will be from SC 10.4
+            font-size: 20px;
             .bold {
                 font-weight: bold;
             }
@@ -105,6 +108,40 @@ body {
         }
         outline: none;
         // prevent white-space from being removed
-        white-space: pre;
+        white-space: pre-wrap;
+
+        // this is the size of an A4 page
+        width: 210mm;
+        min-height: 297mm;
+        max-width: 100%; // if the page is too big, we should make it smaller
+        margin: 0 auto; // horizontal centring
+        margin-top: 20vh; // gap between the top of the page and the editor
+        padding: 40px; // some padding
+        box-sizing: border-box; // We need this for padding to work within our given size
+        border: 1px solid black; // border to stand out
+    }
+
+    // toolbar
+    .editorToolbar {
+        // use UI wide font
+        font-family: $generalFonts;
+
+        // take up the whole width of the page
+        width: 100%;
+
+        // make it take up some of the gap between the top of the page and the editor
+        height: 15vh;
+
+        // black but 20% opacity
+        background-color: #00000020;
+
+        // stick to the top of the page
+        position: fixed;
+        top: 0;
+        left: 0;
+
+        // blur the background
+        backdrop-filter: blur(2px);
+
     }
 }

@@ -1,4 +1,4 @@
-import Editor from "../editor";
+import Editor from "../Editor";
 import Button from "../elementTypes/Button";
 import MyElement from "../elementTypes/MyElement";
 import { State } from "../helpers";
@@ -42,7 +42,7 @@ export default (props: State) => {
                         noteID: (noteMenuTitle.element as HTMLInputElement).value,
                     });
 
-                    editor.generateElement(".editor"); // generate the editor
+                    editor.generateElement("#editor"); // generate the editor
                 }
             }),
             new Button({

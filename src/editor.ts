@@ -1,7 +1,8 @@
 // This is the editor part of the application. It is used to edit the notes.
 
+import Button from "./elementTypes/Button";
 import MyElement from "./elementTypes/MyElement";
-import { State, StringDict } from "./helpers";
+import { MyElementContent, State, StringDict } from "./helpers";
 
 // stylings (from SC 10.4)
 const ALL_STYLINGS = ['bold', 'italic', 'subscript', 'superscript', 'normal', 'selected', 'selectedEnd'] as const;
@@ -23,8 +24,21 @@ interface EditorElements {
 
 class Editor {
 
-    public noteID: String;
+    // used later
+    public noteID: string;
+
+    // this is the element that the editor will be generated in
     private element: HTMLElement;
+
+    // this is the parent element of the editor
+    private editorParent: MyElement;
+
+    // any controls the editor will have
+    private editorControls: { [key: string]: MyElementContent } = {
+        boldButton: new Button({
+            content: "Bold",
+        })
+    };
 
     public main(): void {
         console.log("Editor started");
@@ -32,32 +46,7 @@ class Editor {
 
     // This implements the EditorElements interface
     // It is used to store the data for the editor
-    private _data: EditorElements = {
-        "1": {
-            text: "The quick {2} the lazy dog.",
-        },
-        "2": {
-            text: "brown {3} jumps over",
-            // adding style to the data
-            styling: [
-                "bold"
-            ],
-        },
-        "3": {
-            text: "f{4}",
-            // adding style to the data
-            styling: [
-                "colour-blue"
-            ]
-        },
-        "4": {
-            text: "ox",
-            // adding style to the data
-            styling: [
-                "normal"
-            ]
-        }
-    }
+    private _data: EditorElements = {}
 
     // this will set our data and re-render the editor
     private set data(data: EditorElements) {
@@ -194,7 +183,7 @@ class Editor {
         });
 
         // if we have a location, render into that
-        if (location) {
+        if (location && !this.element) {
             // generate element from the rendered data
             // render into provided location
             this.element = new MyElement({
@@ -205,6 +194,29 @@ class Editor {
                 },
                 content: Object.values(this.renderedData)[0] // the first element is the main element
             }).generateElement(location);
+
+            // create a parent element
+            // where other parts of the editor can be rendered
+            this.editorParent = new MyElement({
+                className: "editorParent",
+                type: "div",
+                content: [
+                    new MyElement({ // the toolbar
+                        className: "editorToolbar",
+                        type: "div",
+                        content: [
+                            // for now, just show note title
+                            this.noteID || "newNote"
+                        ]
+                    }),
+                    // editorMain is the main element
+                    this.element
+                ]
+            })
+
+            // generate the parent element
+            this.editorParent.generateElement(location);
+
         } else if (this.element) { // if not, render into this.element if it exists
             // generate element from the rendered data
             // render into this.element
@@ -304,9 +316,6 @@ class Editor {
             sel.extend(firstEndChild, newOffset[1]);
 
         }
-
-        console.log(this.data)
-
 
     }
 
@@ -459,7 +468,6 @@ class Editor {
             }
         });
 
-        console.log(excessElements)
         // check if there are any excess elements
         if (excessElements.length) {
             // loop through the excess elements
@@ -502,7 +510,7 @@ class Editor {
 
             });
         }
-        console.log(newData);
+
         // set the data to the new data
         // this calls render
         this.data = (newData);
@@ -586,10 +594,43 @@ class Editor {
         return finalElement;
     }
 
-
-    public constructor({
-
+    // our constructor, which takes in some parameters 
+    public constructor(data: {
+        noteID?: string,
+        data?: EditorElements,
+        // hideControls?: boolean,
     }) {
+        // set the data (if none, use our placeholder data)
+        this._data = (data.data || {
+            "1": {
+                text: "The quick {2} the lazy dog.",
+            },
+            "2": {
+                text: "brown {3} jumps over",
+                // adding style to the data
+                styling: [
+                    "bold"
+                ],
+            },
+            "3": {
+                text: "f{4}",
+                // adding style to the data
+                styling: [
+                    "colour-blue"
+                ]
+            },
+            "4": {
+                text: "ox",
+                // adding style to the data
+                styling: [
+                    "normal"
+                ]
+            }
+        });
+
+        // set the noteID
+        this.noteID = (data.noteID || "unknown");
+
         console.log("Editor initialised");
     }
 }

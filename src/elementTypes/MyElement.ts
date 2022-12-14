@@ -1,10 +1,10 @@
-import { EventDict, State, StringDict } from "../helpers";
+import { EventDict, MyElementContent, State, StringDict } from "../helpers";
 
 class MyElement {
 
     className!: string; // element class
     type: string; // what element to generate, i.e., div, span, etc.
-    private _content!: string | MyElement | MyElement[] | HTMLElement; // content, either string or another MyElement, or a raw HTMLElement
+    private _content!: MyElementContent; // content, either string or another MyElement, or a raw HTMLElement
     private _attributes!: State; // any attributes
     private _styling!: StringDict; // any CSS styling
     private _events!: EventDict; // any events
@@ -14,11 +14,11 @@ class MyElement {
 
     private permanentEvents: EventDict = {}; // events that will be added to the element when it is generated, and will not be removed when new events are added
 
-    get content(): string | MyElement | MyElement[] | HTMLElement {
+    get content(): MyElementContent {
         return this._content;
     }
 
-    set content(content: string | MyElement | MyElement[] | HTMLElement) {
+    set content(content: MyElementContent) {
         if (!(content instanceof String) && !(content instanceof MyElement) && !(content instanceof Array) && !(content instanceof HTMLElement)) {
             content = content.toString();
         }
@@ -50,7 +50,7 @@ class MyElement {
         return this._events;
     }
 
-    
+
     // take in new events value and update the element
     set events(events: EventDict) {
         Object.keys(this.events).forEach(event => {
@@ -73,21 +73,30 @@ class MyElement {
                 } else if (this._content instanceof MyElement) {
                     this.element.innerHTML = "";
                     this.element.appendChild(this._content.generateElement());
+                } else if (this._content instanceof HTMLElement) { // if its an HTMLElement, just replace the element with it 
+                    this.element.innerHTML = "";
+                    this.element.appendChild(this._content);
                 } else if (this._content instanceof Array) {
                     // empty this.element contents
                     this.element.innerHTML = "";
                     this._content.forEach(element => {
-                        if (!(element instanceof MyElement)) throw "Content array must only contain MyElement objects";
-                        // make this.element empty
-                        this.element.appendChild(element.generateElement());
+                        if (!(element as MyElementContent)) throw "Content array must only contain MyElement objects";
+                        
+                        // render the element depending on its type
+                        if (element instanceof MyElement) {
+                            this.element.appendChild(element.generateElement());
+                        } else if (element instanceof HTMLElement) {
+                            this.element.appendChild(element);
+                        } else if (typeof element === "string") {
+                            this.element.innerHTML += element;
+                        } else {
+                            throw "Content array must only contain MyElement objects";
+                        }
                     });
-                } else if (this._content instanceof HTMLElement) { // if its an HTMLElement, just replace the element with it 
-                    this.element.innerHTML = "";
-                    this.element.appendChild(this._content);
-                }
+                } 
 
                 break;
-            
+
             case "attributes":
                 for (let key in this.attributes) {
                     this.element.setAttribute(key, this.attributes[key]);
@@ -103,7 +112,7 @@ class MyElement {
                 });
 
                 break;
-            
+
             case "events":
                 if (this.events) {
                     console.log("events gen");
@@ -136,7 +145,7 @@ class MyElement {
             default:
                 break;
         }
-        
+
     }
 
     generateElement(location?: string): HTMLElement {
@@ -160,7 +169,7 @@ class MyElement {
 
         // Add the class name to the element if it exists.
         if (this.className) this.element.className = this.className;
-        
+
         this.generation("all");
 
         // check if location is defined, then place element in location
@@ -179,14 +188,14 @@ class MyElement {
     }
 
     constructor(data: { // passing an object to the constructor, containing all the data needed to generate the element. Done like this to allow for flexibility.
-        className?: string, 
-        type: string, 
+        className?: string,
+        type: string,
         events?: EventDict,
-        content: string | MyElement | MyElement[] | HTMLElement, 
-        attributes?: State, 
+        content: MyElementContent,
+        attributes?: State,
         styling?: StringDict
     }) { // This gives all the values to the properties of the class so that they can be used
-        this.className = data.className; 
+        this.className = data.className;
         this.type = data.type;
         this._events = data.events;
         this._content = data.content;
