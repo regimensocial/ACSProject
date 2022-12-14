@@ -118,14 +118,15 @@ body {
         margin-top: 20vh; // gap between the top of the page and the editor
         padding: 40px; // some padding
         box-sizing: border-box; // We need this for padding to work within our given size
-        border: 1px solid black; // border to stand out
+        // border: 1px solid black; // border to stand out
+        box-shadow: $standardBoxShadow;
     }
 
     // toolbar
     .editorToolbar {
         // use UI wide font
         font-family: $generalFonts;
-
+        box-shadow: $standardBoxShadow;
         // take up the whole width of the page
         width: 100%;
 
@@ -133,7 +134,7 @@ body {
         height: 15vh;
 
         // black but 20% opacity
-        background-color: #00000020;
+        background-color: #00000010;
 
         // stick to the top of the page
         position: fixed;
