@@ -115,7 +115,7 @@ body {
         min-height: 297mm;
         max-width: 100%; // if the page is too big, we should make it smaller
         margin: 0 auto; // horizontal centring
-        margin-top: 20vh; // gap between the top of the page and the editor
+        margin-top: 23vh; // gap between the top of the page and the editor
         padding: 40px; // some padding
         box-sizing: border-box; // We need this for padding to work within our given size
         // border: 1px solid black; // border to stand out
@@ -133,13 +133,24 @@ body {
         // make it take up some of the gap between the top of the page and the editor
         height: 15vh;
 
-        // black but 20% opacity
-        background-color: #00000010;
+        // white but 20% opacity
+        // background-color: #ffffff98;
+
+        background-color: rgba($color: #ffffff, $alpha: 0.85);
 
         // stick to the top of the page
         position: fixed;
         top: 0;
-        left: 0;
+        left: 50%;
+        transform: translate(-50%, 0);
+
+        // horizontal centring
+        margin: 0 auto;
+        border-bottom-left-radius: 15px;
+        border-bottom-right-radius: 15px;
+
+        padding: 20px;
+        box-sizing: border-box; // We need this for padding to work within our given size
 
         // blur the background
         backdrop-filter: blur(2px);
