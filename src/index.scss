@@ -118,7 +118,8 @@ body {
         margin-top: 23vh; // gap between the top of the page and the editor
         padding: 40px; // some padding
         box-sizing: border-box; // We need this for padding to work within our given size
-        // border: 1px solid black; // border to stand out
+       
+        // shadow border to stand out
         box-shadow: $standardBoxShadow;
     }
 
@@ -127,15 +128,14 @@ body {
         // use UI wide font
         font-family: $generalFonts;
         box-shadow: $standardBoxShadow;
+
         // take up the whole width of the page
         width: 100%;
 
         // make it take up some of the gap between the top of the page and the editor
         height: 15vh;
 
-        // white but 20% opacity
-        // background-color: #ffffff98;
-
+        // 85% white
         background-color: rgba($color: #ffffff, $alpha: 0.85);
 
         // stick to the top of the page
@@ -146,14 +146,18 @@ body {
 
         // horizontal centring
         margin: 0 auto;
-        border-bottom-left-radius: 15px;
-        border-bottom-right-radius: 15px;
 
         padding: 20px;
         box-sizing: border-box; // We need this for padding to work within our given size
 
         // blur the background
         backdrop-filter: blur(2px);
+
+        .editorToolbarButtons {
+            .active {
+                box-shadow: $standardBoxShadowInset;
+            }
+        }
 
     }
 }

@@ -5,7 +5,16 @@ import MyElement from "./elementTypes/MyElement";
 import { MyElementContent, State, StringDict } from "./helpers";
 
 // stylings (from SC 10.4)
-const ALL_STYLINGS = ['bold', 'italic', 'subscript', 'superscript', 'normal', 'selected', 'selectedEnd'] as const;
+const ALL_STYLINGS = [
+    'bold', 
+    'italic', 
+    'subscript', 
+    'superscript',
+    'underline',
+    'unbold', 
+    'selected', 
+    'selectedEnd'
+] as const;
 // this variable is used to type the styling of the editor elements
 // and for comparisons
 type StylingTuple = typeof ALL_STYLINGS | `colour-${string}`;
@@ -35,9 +44,28 @@ class Editor {
 
     // any controls the editor will have
     private editorControls: { [key: string]: MyElementContent } = {
-        boldButton: new Button({
+        // the following are buttons in accordance with the SC 10.4
+        bold: new Button({
             content: "Bold",
-        })
+            className: "bold",
+        }),
+        italic: new Button({
+            content: "Italic",
+            className: "italic",
+        }),
+        underline: new Button({
+            content: "Underline",
+            className: "underline",
+        }),
+        subscript: new Button({
+            content: "Subscript",
+            className: "subscript",
+        }),
+        superscript: new Button({
+            content: "Superscript",
+            className: "superscript",
+        }),
+        // we'll do colour and alignment later
     };
 
     public main(): void {
@@ -132,6 +160,45 @@ class Editor {
 
     }
 
+    private setUpButtons(): void {
+        // check where the cursor is, then set the buttons active according to styling of elements
+
+        // make buttons inactive (remove active class)
+        Object.keys(this.editorControls).forEach((key) => {
+            (this.editorControls[key] as any).className = [key];
+        });
+
+        var stylings = this.getSelection(true) as string[];
+
+        stylings.forEach((styling) => {
+            // if the styling is a colour, ignore it for now
+            if (styling.startsWith("colour")) return;
+
+            // otherwise, set the respective button active
+            if (styling == "bold") {
+                (this.editorControls.bold as any).className = ["bold", "active"];
+            } else if (styling == "italic") {
+                (this.editorControls.italic as any).className = ["italic", "active"];
+            } else if (styling == "underline") {
+                (this.editorControls.underline as any).className = ["underline", "active"];
+            } else if (styling == "subscript") {
+                (this.editorControls.subscript as any).className = ["subscript", "active"];
+            } else if (styling == "superscript") {
+                (this.editorControls.superscript as any).className = ["superscript", "active"];
+            } else if (styling == "unbold") {
+                (this.editorControls.bold as any).className = ["bold", ""];
+            } else if (styling == "unitalic") {
+                (this.editorControls.italic as any).className = ["italic", ""];
+            } else if (styling == "ununderline") {
+                (this.editorControls.underline as any).className = ["underline", ""];
+            } else if (styling == "unsubscript") {
+                (this.editorControls.subscript as any).className = ["subscript", ""];
+            } else if (styling == "unsuperscript") {
+                (this.editorControls.superscript as any).className = ["superscript", ""];
+            }
+        });
+    }
+
     // This function is used to render the editor
     private render(location?: string): void {
 
@@ -206,7 +273,19 @@ class Editor {
                         type: "div",
                         content: [
                             // for now, just show note title
-                            this.noteID || "newNote"
+                            this.noteID || "newNote",
+                            // the wrapper for the buttons
+                            new MyElement({
+                                className: "editorToolbarButtons",
+                                type: "div",
+                                content: [ // the buttons
+                                    this.editorControls.bold,
+                                    this.editorControls.italic,
+                                    this.editorControls.underline,
+                                    this.editorControls.subscript,
+                                    this.editorControls.superscript,
+                                ]
+                            })
                         ]
                     }),
                     // editorMain is the main element
@@ -379,6 +458,8 @@ class Editor {
                 this.applyStyle("newline");
             }
 
+            this.setUpButtons();
+
             // cancel timeout if it exists
             if (timeout) clearTimeout(timeout);
 
@@ -491,8 +572,8 @@ class Editor {
                 // get the styling of the other element
                 var mergeStyling = mergeElement.styling;
 
-                // if mergeElement has normal and element has bold, remove bold from element
-                if (mergeStyling.includes("normal") && element.styling.includes("bold")) {
+                // if mergeElement has unbold and element has bold, remove bold from element
+                if (mergeStyling.includes("unbold") && element.styling.includes("bold")) {
                     element.styling.splice(element.styling.indexOf("bold"), 1);
                 }
 
@@ -516,7 +597,7 @@ class Editor {
         this.data = (newData);
     }
 
-    getSelection() {
+    getSelection(stylingsOnly = false) {
         // get the selected text
         var selection = window.getSelection();
 
@@ -526,6 +607,9 @@ class Editor {
         // this is a clone of the contents, so we can observe it
         var clone = range.cloneContents();
 
+        // this will store the styling of the selection
+        var stylings = [];
+
         // loop through the children of the clone
         for (var i = 0; i < clone.children.length; i++) {
             // get the child
@@ -533,6 +617,9 @@ class Editor {
 
             // if it's a text node, return
             if (child.nodeType === Node.TEXT_NODE) return;
+
+            // loop through the classlist 
+
 
             // get the key from the child
             var key = child.dataset.key;
@@ -546,6 +633,7 @@ class Editor {
                 child.dataset.partial = "true"; // if an element doesn't have this data attribute, it's the whole thing
             }
         }
+
 
         // this is the parent of element that the selection is in
         var firstParent = (range.commonAncestorContainer);
@@ -567,10 +655,15 @@ class Editor {
             // set newParent classList to the firstParent classList
             (firstParent as HTMLElement).classList.forEach((className) => {
                 newParent.classList.add(className);
+                // add the class to the stylings array if it's in the ALL_STYLINGS arrayy
+                if (ALL_STYLINGS.includes(className as any)) stylings.push(className);
             });
 
             // for now, colour is the only style that needs to be copied
             (newParent).style.color = (firstParent as HTMLElement).style.color;
+
+            // if we have a colour, add it to the stylings array
+            if ((firstParent as HTMLElement).style.color) stylings.push("colour-" + (firstParent as HTMLElement).style.color);
 
             // if we've already wrapped the first element, we don't want to wrap it again, wrap the previous element instead
             var thingToAppend = finalElement ? finalElement : clone;
@@ -590,8 +683,8 @@ class Editor {
             firstParent = firstParent.parentElement;
         }
 
-        // this will return the final element
-        return finalElement;
+        // if we only want the stylings, return them, otherwise return the final element
+        return stylingsOnly ? stylings : finalElement;
     }
 
     // our constructor, which takes in some parameters 
@@ -623,7 +716,8 @@ class Editor {
                 text: "ox",
                 // adding style to the data
                 styling: [
-                    "normal"
+                    "unbold",
+                    "underline"
                 ]
             }
         });

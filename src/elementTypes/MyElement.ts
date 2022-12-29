@@ -2,7 +2,7 @@ import { EventDict, MyElementContent, State, StringDict } from "../helpers";
 
 class MyElement {
 
-    className!: string; // element class
+    private _className!: string | string[]; // element class
     type: string; // what element to generate, i.e., div, span, etc.
     private _content!: MyElementContent; // content, either string or another MyElement, or a raw HTMLElement
     private _attributes!: State; // any attributes
@@ -13,6 +13,16 @@ class MyElement {
 
 
     private permanentEvents: EventDict = {}; // events that will be added to the element when it is generated, and will not be removed when new events are added
+
+
+    get className(): string | string[] {
+        return this._className;
+    }
+
+    set className(className: string | string[]) {
+        this._className = className;
+        this.generation("className");
+    }
 
     get content(): MyElementContent {
         return this._content;
@@ -97,6 +107,15 @@ class MyElement {
 
                 break;
 
+            case "className":
+                if (this._className) {
+                    if (typeof this._className === "string") {
+                        this.element.className = this._className;
+                    } else if (this._className instanceof Array) {
+                        this.element.className = this._className.join(" ");
+                    }
+                }
+
             case "attributes":
                 for (let key in this.attributes) {
                     this.element.setAttribute(key, this.attributes[key]);
@@ -137,7 +156,7 @@ class MyElement {
             case "all":
                 console.log("first gen"); // this is just for debugging
                 // generate all features
-                ["content", "attributes", "styling", "events"].forEach(aspect => {
+                ["content", "attributes", "styling", "events", "className"].forEach(aspect => {
                     this.generation(aspect);
                 });
                 break;
@@ -167,9 +186,6 @@ class MyElement {
 
         this.element = this.element || document.createElement(this.type);
 
-        // Add the class name to the element if it exists.
-        if (this.className) this.element.className = this.className;
-
         this.generation("all");
 
         // check if location is defined, then place element in location
@@ -188,14 +204,14 @@ class MyElement {
     }
 
     constructor(data: { // passing an object to the constructor, containing all the data needed to generate the element. Done like this to allow for flexibility.
-        className?: string,
+        className?: string | string[],
         type: string,
         events?: EventDict,
         content: MyElementContent,
         attributes?: State,
         styling?: StringDict
     }) { // This gives all the values to the properties of the class so that they can be used
-        this.className = data.className;
+        this._className = data.className;
         this.type = data.type;
         this._events = data.events;
         this._content = data.content;
