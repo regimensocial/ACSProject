@@ -2,17 +2,17 @@
 
 import Button from "./elementTypes/Button";
 import MyElement from "./elementTypes/MyElement";
-import { MyElementContent, State, StringDict } from "./helpers";
+import { MyElementContent, randomID, State } from "./helpers";
 
 // stylings (from SC 10.4)
 const ALL_STYLINGS = [
-    'bold', 
-    'italic', 
-    'subscript', 
+    'bold',
+    'italic',
+    'subscript',
     'superscript',
     'underline',
-    'unbold', 
-    'selected', 
+    'un_bold',
+    'selected',
     'selectedEnd'
 ] as const;
 // this variable is used to type the styling of the editor elements
@@ -48,6 +48,9 @@ class Editor {
         bold: new Button({
             content: "Bold",
             className: "bold",
+            func: () => {
+                this.applyStyle("bold");
+            }
         }),
         italic: new Button({
             content: "Italic",
@@ -85,6 +88,25 @@ class Editor {
     }
 
     private renderedData: State = {};
+
+    // this will be the current selection
+    private currentSelection: HTMLElement;
+
+    // this will set the current selection
+    private setCurrentSelection(): void {
+        // disable the buttons
+        Object.values(this.editorControls).forEach((elem) => {
+            (elem as Button).disabled = true;
+        });
+
+        // set the current selection
+        this.currentSelection = this.getSelection() as HTMLElement;
+
+        // enable the buttons
+        Object.values(this.editorControls).forEach((elem) => {
+            (elem as Button).disabled = false;
+        });
+    }
 
 
     // this is so I can repeat or move code
@@ -168,7 +190,17 @@ class Editor {
             (this.editorControls[key] as any).className = [key];
         });
 
+        // get the stylings of the selection
         var stylings = this.getSelection(true) as string[];
+
+        // check stylings contains any un_ styles and remove the respective styles
+        var removals = stylings.filter((styling) => styling.startsWith("un_"));
+
+        // remove the un_ from the removals
+        removals = removals.map((removal) => removal.replace("un_", ""));
+
+        // remove the removals from the stylings
+        stylings = stylings.filter((styling) => !removals.includes(styling));
 
         stylings.forEach((styling) => {
             // if the styling is a colour, ignore it for now
@@ -185,35 +217,28 @@ class Editor {
                 (this.editorControls.subscript as any).className = ["subscript", "active"];
             } else if (styling == "superscript") {
                 (this.editorControls.superscript as any).className = ["superscript", "active"];
-            } else if (styling == "unbold") {
-                (this.editorControls.bold as any).className = ["bold", ""];
-            } else if (styling == "unitalic") {
-                (this.editorControls.italic as any).className = ["italic", ""];
-            } else if (styling == "ununderline") {
-                (this.editorControls.underline as any).className = ["underline", ""];
-            } else if (styling == "unsubscript") {
-                (this.editorControls.subscript as any).className = ["subscript", ""];
-            } else if (styling == "unsuperscript") {
-                (this.editorControls.superscript as any).className = ["superscript", ""];
             }
         });
     }
 
     // This function is used to render the editor
-    private render(location?: string): void {
+    private render(location: string = null, alternativeData?: EditorElements) {
 
+        var dataToRender = alternativeData || this._data;
 
         if (this.element) this.element.contentEditable = "false";
 
+        var renderedData: State = {};
+
         // loop through the data and render it
-        Object.keys(this._data).forEach((key) => {
+        Object.keys(dataToRender).forEach((key) => {
             // create span using inbuilt functions, fill with text, add to this.renderedData
             var span = document.createElement("span");
 
             // Adding the id to the span as a dataset property so we can keep track
             span.dataset.key = key
 
-            var elemInfo = this._data[key]
+            var elemInfo = dataToRender[key]
 
             // add the text to the span
             span.innerHTML = elemInfo.text;
@@ -231,23 +256,27 @@ class Editor {
             })
 
             // add the span to the rendered data
-            this.renderedData[key] = span;
+            renderedData[key] = span;
         });
 
         // loop through the data and replace the placeholders with the rendered data
-        Object.keys(this.renderedData).forEach((key) => {
+        Object.keys(renderedData).forEach((key) => {
 
-            var text = this.renderedData[key].innerHTML;
+            var text = renderedData[key].innerHTML;
 
             // find any placeholders, replace them with the rendered data
             // TODO: make this more efficient
-            Object.keys(this.renderedData).forEach((key) => {
-                if (text.includes(`{${key}}`)) text = text.replace(`{${key}}`, this.renderedData[key].outerHTML);
+            Object.keys(renderedData).forEach((key) => {
+                if (text.includes(`{${key}}`)) text = text.replace(`{${key}}`, renderedData[key].outerHTML);
             });
 
-            this.renderedData[key].innerHTML = text;
+            renderedData[key].innerHTML = text;
 
         });
+
+        if (alternativeData) return renderedData;
+
+        this.renderedData = renderedData;
 
         // if we have a location, render into that
         if (location && !this.element) {
@@ -286,7 +315,12 @@ class Editor {
                                     this.editorControls.superscript,
                                 ]
                             })
-                        ]
+                        ],
+                        events: {
+                            mouseover: () => {
+                                this.setCurrentSelection();
+                            }
+                        }
                     }),
                     // editorMain is the main element
                     this.element
@@ -431,6 +465,82 @@ class Editor {
             sel.removeAllRanges();
             sel.addRange(range);
 
+        } else if (style == "bold") {
+            // this will be handled in "part two"
+            if ((!this.currentSelection) || this.currentSelection.textContent.length == 0) return;
+
+            // "part one" is styling of a pre-made selection 
+            var recomposedSelection = this.recompose(this.currentSelection);
+            // FIX: this isn't returning anything for single elements, no parents
+
+            var newID = randomID(Object.keys(this._data));
+
+            // delete selection 
+            document.getSelection().deleteFromDocument();
+
+            // insert random ID text at the selection in the format {p-<randomID>}
+            document.getSelection().getRangeAt(0).insertNode(document.createTextNode(`{p-${newID}}`));
+
+            // this will contain the new IDs instead
+            var secondComposition: EditorElements = {};
+
+            // stores replacements for the keys
+            var keySubstitutions: [[string, string]] = null;
+
+            // go through recomposedSelection and replace all keys with new IDs
+            Object.keys(recomposedSelection).map((key, i) => {
+                // make a new key
+                var newKey = randomID(Object.keys(this._data));
+
+                if (i == 0) newKey = "p-" + newID;
+
+                // if keySubstitutions is null, make it an array with the first substitution
+                if (keySubstitutions == null) {
+                    keySubstitutions = [[key, newKey]];
+                } else {
+                    // otherwise just push the substitution
+                    keySubstitutions.push([key, newKey]);
+                }
+
+                // remake the data
+                secondComposition[newKey] = recomposedSelection[key];
+            });
+
+            // replace all references to the old keys with the new keys
+            // loop through the second composition
+            Object.values(secondComposition).forEach((data) => {
+                // loop through the key substitutions
+                (keySubstitutions).forEach((substitution) => {
+                    // replace the old key with the new key
+                    data.text = data.text.replace(`{${substitution[0]}}`, `{${substitution[1]}}`);
+                });
+
+                // remove bold or un_bold from the stylings
+                data.styling = data.styling.filter((style) => {
+                    return style != "bold" && style != "un_bold";
+                });
+            });
+
+            console.log(secondComposition)
+
+            secondComposition["p-" + newID].styling.push("bold");
+
+            // add the new data to the data
+
+            // console.log(secondComposition);
+            
+            // 
+
+            var temp = this.recompose(null, true)
+            
+            console.log(temp);
+            // return
+
+            this.data = { ...temp, ...secondComposition };
+
+
+
+            
         }
     }
 
@@ -472,16 +582,20 @@ class Editor {
         return this.element;
     }
 
-    recompose() {
+    // recompose the data into our format
+    // by default, recompose the data in this.element
+    private recompose(alternativeElement: HTMLElement = null, ignoreSelection: boolean = false) {
 
+        // get the element to recompose
+        var recomposingElement = alternativeElement || this.element;
 
-        // set up selection on recomposition
-        this.setupSelection();
+        // set up selection on recomposition (on normal recomposition)
+        if (!alternativeElement && !ignoreSelection) this.setupSelection();
 
         // we are going to remake the data for the variable this.element using the innerHTML of this.element
 
         // get the element spans as a NodeListOf
-        var spans = this.element.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
+        var spans = recomposingElement.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
 
         // temporary data object which will be used to create the new data
         var newData: EditorElements = {};
@@ -573,7 +687,7 @@ class Editor {
                 var mergeStyling = mergeElement.styling;
 
                 // if mergeElement has unbold and element has bold, remove bold from element
-                if (mergeStyling.includes("unbold") && element.styling.includes("bold")) {
+                if (mergeStyling.includes("un_bold") && element.styling.includes("bold")) {
                     element.styling.splice(element.styling.indexOf("bold"), 1);
                 }
 
@@ -593,13 +707,26 @@ class Editor {
         }
 
         // set the data to the new data
-        // this calls render
-        this.data = (newData);
+
+        // if no alternative element is provided, set the data to the new data
+        // and render the new data
+        if (!alternativeElement) {
+            // this calls render
+            this.data = newData;
+        }
+
+        // return the new data
+        return newData;
+
+
     }
 
     getSelection(stylingsOnly = false) {
         // get the selected text
         var selection = window.getSelection();
+
+        // if there is no selection, return null
+        if (!selection || selection.rangeCount === 0) return null;
 
         // this is the range of the selection
         var range = selection.getRangeAt(0);
@@ -701,9 +828,9 @@ class Editor {
             "2": {
                 text: "brown {3} jumps over",
                 // adding style to the data
-                styling: [
-                    "bold"
-                ],
+                // styling: [
+                //     "bold"
+                // ],
             },
             "3": {
                 text: "f{4}",
@@ -716,8 +843,7 @@ class Editor {
                 text: "ox",
                 // adding style to the data
                 styling: [
-                    "unbold",
-                    "underline"
+                    "italic"
                 ]
             }
         });

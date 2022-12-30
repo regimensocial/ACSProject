@@ -17,9 +17,22 @@ interface State {
 // this is the type that can be used for the content of a MyElement
 type MyElementContent = string | MyElement | HTMLElement | MyElementContent[];
 
+var randomID = (repeatList?: string[]): string => {
+    // generate initial random ID
+    var temp = Math.random().toString(36).substring(2, 9);
+
+    // check if the ID is already in the list of IDs
+    while (repeatList && repeatList.length > 0 && repeatList.includes(temp)) {
+        temp = Math.random().toString(36).substring(2, 9);
+    }
+
+    return temp // Generates a random ID, used for the ID of the elements.
+}
+
 export { // Must export so other files can use the functions/interfaces/types.
     StringDict,
     EventDict,
     State,
-    MyElementContent
+    MyElementContent,
+    randomID
 }
