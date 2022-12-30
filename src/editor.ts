@@ -471,7 +471,8 @@ class Editor {
 
             // "part one" is styling of a pre-made selection 
             var recomposedSelection = this.recompose(this.currentSelection);
-            // FIX: this isn't returning anything for single elements, no parents
+            
+            console.log(this.currentSelection, recomposedSelection);
 
             var newID = randomID(Object.keys(this._data));
 
@@ -596,6 +597,13 @@ class Editor {
 
         // get the element spans as a NodeListOf
         var spans = recomposingElement.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
+
+        // if spans are empty, set it to a node list with the element itself
+        if (!spans.length) {
+            var temp = document.createDocumentFragment();
+            temp.appendChild(recomposingElement);
+            spans = temp.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
+        }
 
         // temporary data object which will be used to create the new data
         var newData: EditorElements = {};
@@ -828,9 +836,9 @@ class Editor {
             "2": {
                 text: "brown {3} jumps over",
                 // adding style to the data
-                // styling: [
-                //     "bold"
-                // ],
+                styling: [
+                    "underline"
+                ]
             },
             "3": {
                 text: "f{4}",
