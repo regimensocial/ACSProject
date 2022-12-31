@@ -472,7 +472,9 @@ class Editor {
             // "part one" is styling of a pre-made selection 
             var recomposedSelection = this.recompose(this.currentSelection);
             
-            console.log(this.currentSelection, recomposedSelection);
+            console.log(this.currentSelection);
+
+            console.log(recomposedSelection);
 
             var newID = randomID(Object.keys(this._data));
 
@@ -522,26 +524,12 @@ class Editor {
                 });
             });
 
-            console.log(secondComposition)
-
             secondComposition["p-" + newID].styling.push("bold");
 
-            // add the new data to the data
-
-            // console.log(secondComposition);
-            
-            // 
-
             var temp = this.recompose(null, true)
-            
-            console.log(temp);
-            // return
-
+           
             this.data = { ...temp, ...secondComposition };
 
-
-
-            
         }
     }
 
@@ -599,11 +587,17 @@ class Editor {
         var spans = recomposingElement.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
 
         // if spans are empty, set it to a node list with the element itself
-        if (!spans.length) {
+        if (!spans.length || alternativeElement) {
             var temp = document.createDocumentFragment();
             temp.appendChild(recomposingElement);
             spans = temp.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
         }
+
+        // var spansAsFragment = document.createDocumentFragment();
+        // spans.forEach((span) => {
+        //     spansAsFragment.appendChild(span);
+        // });
+        // console.log(spansAsFragment)
 
         // temporary data object which will be used to create the new data
         var newData: EditorElements = {};
@@ -619,6 +613,11 @@ class Editor {
 
             // get the innerHTML
             var text = span.innerHTML;
+
+            if (!text) {
+                // delete the key from the data
+                delete this._data[key];
+            }
 
             // get the styling
             var styling = span.classList;
