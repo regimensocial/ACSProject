@@ -55,18 +55,30 @@ class Editor {
         italic: new Button({
             content: "Italic",
             className: "italic",
+            func: () => {
+                this.applyStyle("italic");
+            }
         }),
         underline: new Button({
             content: "Underline",
             className: "underline",
+            func: () => {
+                this.applyStyle("underline");
+            }
         }),
         subscript: new Button({
             content: "Subscript",
             className: "subscript",
+            func: () => {
+                this.applyStyle("subscript");
+            }
         }),
         superscript: new Button({
             content: "Superscript",
             className: "superscript",
+            func: () => {
+                this.applyStyle("superscript");
+            }
         }),
         // we'll do colour and alignment later
     };
@@ -465,71 +477,107 @@ class Editor {
             sel.removeAllRanges();
             sel.addRange(range);
 
-        } else if (style == "bold") {
-            // this will be handled in "part two"
-            if ((!this.currentSelection) || this.currentSelection.textContent.length == 0) return;
+        } else {
+            // check style is valid
+            if (ALL_STYLINGS.includes(style as any)) {
 
-            // "part one" is styling of a pre-made selection 
-            var recomposedSelection = this.recompose(this.currentSelection);
-            
-            console.log(this.currentSelection);
+                // used for the "un" style
+                var unstyle = "un_" + style;
 
-            console.log(recomposedSelection);
+                // this will be handled in "part two"
+                if ((!this.currentSelection) || this.currentSelection.textContent.length == 0) return;
 
-            var newID = randomID(Object.keys(this._data));
+                // create a temporary document fragment
+                var temp = document.createDocumentFragment();
 
-            // delete selection 
-            document.getSelection().deleteFromDocument();
+                // append the current selection to the fragment
+                temp.appendChild(this.currentSelection);
 
-            // insert random ID text at the selection in the format {p-<randomID>}
-            document.getSelection().getRangeAt(0).insertNode(document.createTextNode(`{p-${newID}}`));
+                // this is because parts of the selection can be lost during recomposition
+                // so it's best just to wrap the whole thing in a fragment
+                // that can then be sent off to be re-composed
 
-            // this will contain the new IDs instead
-            var secondComposition: EditorElements = {};
+                // get all the spans in our selection
+                var spans = temp.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
 
-            // stores replacements for the keys
-            var keySubstitutions: [[string, string]] = null;
+                // generate a random ID for our selection
+                // this is used for keys
+                var newID = randomID(Object.keys(this._data));
 
-            // go through recomposedSelection and replace all keys with new IDs
-            Object.keys(recomposedSelection).map((key, i) => {
-                // make a new key
-                var newKey = randomID(Object.keys(this._data));
+                // loop through all the spans and randomly generate a new ID for them
+                for (var i = 0; i < spans.length; i++) {
+                    var span = spans[i];
 
-                if (i == 0) newKey = "p-" + newID;
+                    // set the key to the new ID (or on the first span, the new ID)
+                    span.dataset["key"] = (i === 0) ? newID : randomID(Object.keys(this._data));
 
-                // if keySubstitutions is null, make it an array with the first substitution
-                if (keySubstitutions == null) {
-                    keySubstitutions = [[key, newKey]];
-                } else {
-                    // otherwise just push the substitution
-                    keySubstitutions.push([key, newKey]);
+                    // only on the first span, add the bold/unbold class
+                    if (i === 0) {
+                        // if it doesn't have the bold class, add it
+                        if (!span.classList.contains(style)) {
+                            span.classList.add(style);
+                            span.classList.remove(unstyle);
+                        } else {
+                            // if it does have the bold class, remove it
+                            span.classList.remove(style);
+                            span.classList.add(unstyle);
+                        }
+
+                        // if parent is subscript or superscript, the opposite should be removed entirely
+                        if (style == "subscript") {
+                            span.classList.remove("superscript");
+                            span.classList.remove("un_superscript");
+                        } else if (style == "superscript") {
+                            span.classList.remove("subscript");
+                            span.classList.add("un_subscript");
+                        }
+
+                    } else { // on all others, remove the bold/unbold class
+                        span.classList.remove(unstyle);
+                        span.classList.remove(style);
+
+                        if (style == "subscript" || style == "superscript") {
+                            
+                            // in all children, remove anything related to subscript or superscript
+                            span.classList.remove("subscript");
+                            span.classList.remove("un_subscript");
+                            span.classList.remove("superscript");
+                            span.classList.remove("un_superscript");
+                        }
+                    }
+
+                    // if it's a subscript or superscript, remove the other one
+                    
+
                 }
 
-                // remake the data
-                secondComposition[newKey] = recomposedSelection[key];
-            });
+                // get the recomposed selection
+                var recomposedSelection = this.recompose(temp as any);
 
-            // replace all references to the old keys with the new keys
-            // loop through the second composition
-            Object.values(secondComposition).forEach((data) => {
-                // loop through the key substitutions
-                (keySubstitutions).forEach((substitution) => {
-                    // replace the old key with the new key
-                    data.text = data.text.replace(`{${substitution[0]}}`, `{${substitution[1]}}`);
-                });
+                // delete selection 
+                document.getSelection().deleteFromDocument();
 
-                // remove bold or un_bold from the stylings
-                data.styling = data.styling.filter((style) => {
-                    return style != "bold" && style != "un_bold";
-                });
-            });
+                // insert random ID placeholder using our new ID
+                document.getSelection().getRangeAt(0).insertNode(document.createTextNode(`{${newID}}`));
 
-            secondComposition["p-" + newID].styling.push("bold");
+                // do a special recomposition which doesn't re-render the editor
+                // this gives us the data, minus the selection
+                var partialRecomposition = this.recompose(null, true)
 
-            var temp = this.recompose(null, true)
-           
-            this.data = { ...temp, ...secondComposition };
+                // add our new data to the data
+                // this will force a re-render due to my setter
+                this.data = { ...partialRecomposition, ...recomposedSelection };
 
+                // select element with key newID
+                var element = document.querySelector(`[data-key="${newID}"]`);
+
+                // this part reselects the element
+                const range = document.createRange();
+                range.selectNode(element);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
         }
     }
 
@@ -583,6 +631,7 @@ class Editor {
 
         // we are going to remake the data for the variable this.element using the innerHTML of this.element
 
+        console.log(recomposingElement)
         // get the element spans as a NodeListOf
         var spans = recomposingElement.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
 
@@ -606,7 +655,7 @@ class Editor {
         var excessElements: string[] = [];
 
         // loop through the spans
-        spans.forEach((span) => {
+        Array.from(spans).map((span, index) => {
 
             // get the key
             var key = span.dataset.key;
@@ -663,6 +712,9 @@ class Editor {
 
             }
 
+            // if there are no styling and it's not the first element, add it to excess elements
+            if (!stylingArray.length && index !== 0) excessElements.push(key);
+
             // add the text to the data at the key
             newData[key] = {
                 text: text,
@@ -689,6 +741,12 @@ class Editor {
 
                 // get the other element
                 var mergeElement = newData[mergeKey];
+
+                if (!mergeElement) {
+                    // if the other element doesn't exist, delete this element
+                    // delete newData[key];
+                    return;
+                } 
 
                 // get the styling of the other element
                 var mergeStyling = mergeElement.styling;
