@@ -791,7 +791,8 @@ class Editor {
         var selection = window.getSelection();
 
         // if there is no selection, return null
-        if (!selection || selection.rangeCount === 0) return null;
+        // or if the selection is not in the editor, return null
+        if (!selection || selection.rangeCount === 0 || !this.element.contains(selection.anchorNode)) return null;
 
         // this is the range of the selection
         var range = selection.getRangeAt(0);
