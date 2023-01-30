@@ -105,6 +105,20 @@ body {
             .un_bold {
                 font-weight: normal;
             }
+            .un_italic {
+                font-style: normal;
+            }
+            .un_underline {
+                text-decoration: none;
+            }
+            .un_subscript {
+                vertical-align: baseline;
+                font-size: 1em;
+            }
+            .un_superscript {
+                vertical-align: baseline;
+                font-size: 1em;
+            }
         }
         outline: none;
         // prevent white-space from being removed

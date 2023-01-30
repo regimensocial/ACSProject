@@ -557,8 +557,31 @@ class Editor {
                 // delete selection 
                 document.getSelection().deleteFromDocument();
 
+
+
                 // insert random ID placeholder using our new ID
-                document.getSelection().getRangeAt(0).insertNode(document.createTextNode(`{${newID}}`));
+                // document.getSelection().getRangeAt(0).insertNode(document.createTextNode(`{${newID}}`));
+
+                // do the above, but check if it's an empty span, if so, delete the span
+                var range2 = document.getSelection().getRangeAt(0);
+                
+                // we want to insert text, but if the text is in an empty span, we want to delete the span
+                // so we check if the parent is a span, and if it is, we check if it's empty
+                if (range2.startContainer.parentElement.tagName == "SPAN" && range2.startContainer.parentElement.textContent.length == 0) {
+                    // if it is, we delete the span
+                    
+                    // loop through all parents and delete them if they're empty
+                    var parent = range2.startContainer.parentElement;
+                    while (parent.parentElement.tagName == "SPAN" && parent.parentElement.textContent.length == 0) {
+                        parent = parent.parentElement;
+                    }
+
+                    parent.outerHTML = `{${newID}}`;
+                } else {
+                    // if it isn't, we insert the text
+                    range2.insertNode(document.createTextNode(`{${newID}}`));
+                }
+
 
                 // do a special recomposition which doesn't re-render the editor
                 // this gives us the data, minus the selection
@@ -894,9 +917,7 @@ class Editor {
             "2": {
                 text: "brown {3} jumps over",
                 // adding style to the data
-                styling: [
-                    "underline"
-                ]
+                
             },
             "3": {
                 text: "f{4}",
