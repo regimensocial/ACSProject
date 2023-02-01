@@ -80,6 +80,15 @@ class Editor {
                 this.applyStyle("superscript");
             }
         }),
+        colours: [
+            new Button({
+                content: " ",
+                className: "blue",
+                func: () => {
+                    this.applyStyle("colour", "blue");
+                }
+            }),
+        ]
         // we'll do colour and alignment later
     };
 
@@ -325,6 +334,7 @@ class Editor {
                                     this.editorControls.underline,
                                     this.editorControls.subscript,
                                     this.editorControls.superscript,
+                                    this.editorControls.colour,
                                 ]
                             })
                         ],
@@ -477,6 +487,97 @@ class Editor {
             sel.removeAllRanges();
             sel.addRange(range);
 
+        } else if (style == "colour" && value) { // colour handling
+
+            // this will be handled in "part two"
+            if ((!this.currentSelection) || this.currentSelection.textContent.length == 0) return;
+
+            // create a temporary document fragment
+            var temp = document.createDocumentFragment();
+
+            // append the current selection to the fragment
+            temp.appendChild(this.currentSelection);
+
+            // this is because parts of the selection can be lost during recomposition
+            // so it's best just to wrap the whole thing in a fragment
+            // that can then be sent off to be re-composed
+
+            // get all the spans in our selection
+            var spans = temp.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
+
+            // generate a random ID for our selection
+            // this is used for keys
+            var newID = randomID(Object.keys(this._data));
+
+            // loop through all the spans and randomly generate a new ID for them
+            for (var i = 0; i < spans.length; i++) {
+                var span = spans[i];
+
+                // set the key to the new ID (or on the first span, the new ID)
+                span.dataset["key"] = (i === 0) ? newID : randomID(Object.keys(this._data));
+
+                // remove all classes starting with "colour"
+                span.classList.remove(...Array.from(span.classList).filter(c => c.startsWith("colour")));
+
+                if (i === 0) {
+                    // if this is the first span, add the new style
+                    span.classList.add(`colour-${value}`);
+                    span.style.color = value;
+                }
+
+            }
+
+            // get the recomposed selection
+            var recomposedSelection = this.recompose(temp as any);
+
+            // delete selection 
+            document.getSelection().deleteFromDocument();
+
+
+
+            // insert random ID placeholder using our new ID
+            // document.getSelection().getRangeAt(0).insertNode(document.createTextNode(`{${newID}}`));
+
+            // do the above, but check if it's an empty span, if so, delete the span
+            var range2 = document.getSelection().getRangeAt(0);
+
+            // we want to insert text, but if the text is in an empty span, we want to delete the span
+            // so we check if the parent is a span, and if it is, we check if it's empty
+            if (range2.startContainer.parentElement.tagName == "SPAN" && range2.startContainer.parentElement.textContent.length == 0) {
+                // if it is, we delete the span
+
+                // loop through all parents and delete them if they're empty
+                var parent = range2.startContainer.parentElement;
+                while (parent.parentElement.tagName == "SPAN" && parent.parentElement.textContent.length == 0) {
+                    parent = parent.parentElement;
+                }
+
+                parent.outerHTML = `{${newID}}`;
+            } else {
+                // if it isn't, we insert the text
+                range2.insertNode(document.createTextNode(`{${newID}}`));
+            }
+
+
+            // do a special recomposition which doesn't re-render the editor
+            // this gives us the data, minus the selection
+            var partialRecomposition = this.recompose(null, true)
+
+            // add our new data to the data
+            // this will force a re-render due to my setter
+            this.data = { ...partialRecomposition, ...recomposedSelection };
+
+            // select element with key newID
+            var element = document.querySelector(`[data-key="${newID}"]`);
+
+            // this part reselects the element
+            const range = document.createRange();
+            range.selectNode(element);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+
         } else {
             // check style is valid
             if (ALL_STYLINGS.includes(style as any)) {
@@ -537,7 +638,7 @@ class Editor {
                         span.classList.remove(style);
 
                         if (style == "subscript" || style == "superscript") {
-                            
+
                             // in all children, remove anything related to subscript or superscript
                             span.classList.remove("subscript");
                             span.classList.remove("un_subscript");
@@ -547,7 +648,7 @@ class Editor {
                     }
 
                     // if it's a subscript or superscript, remove the other one
-                    
+
 
                 }
 
@@ -564,12 +665,12 @@ class Editor {
 
                 // do the above, but check if it's an empty span, if so, delete the span
                 var range2 = document.getSelection().getRangeAt(0);
-                
+
                 // we want to insert text, but if the text is in an empty span, we want to delete the span
                 // so we check if the parent is a span, and if it is, we check if it's empty
                 if (range2.startContainer.parentElement.tagName == "SPAN" && range2.startContainer.parentElement.textContent.length == 0) {
                     // if it is, we delete the span
-                    
+
                     // loop through all parents and delete them if they're empty
                     var parent = range2.startContainer.parentElement;
                     while (parent.parentElement.tagName == "SPAN" && parent.parentElement.textContent.length == 0) {
@@ -769,7 +870,7 @@ class Editor {
                     // if the other element doesn't exist, delete this element
                     // delete newData[key];
                     return;
-                } 
+                }
 
                 // get the styling of the other element
                 var mergeStyling = mergeElement.styling;
@@ -917,7 +1018,7 @@ class Editor {
             "2": {
                 text: "brown {3} jumps over",
                 // adding style to the data
-                
+
             },
             "3": {
                 text: "f{4}",
