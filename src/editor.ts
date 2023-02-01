@@ -80,15 +80,34 @@ class Editor {
                 this.applyStyle("superscript");
             }
         }),
-        colours: [
-            new Button({
-                content: " ",
-                className: "blue",
-                func: () => {
-                    this.applyStyle("colour", "blue");
-                }
-            }),
-        ]
+        colours: new MyElement({
+            type: "div",
+            content: [
+                "Colours",
+                new Button({
+                    content: " ",
+                    className: "revert colourButton",
+                    func: () => {
+                        this.applyStyle("colour", "red");
+                    },
+                    styling: {
+                        backgroundColor: "red"
+                    }
+                }),
+                new Button({
+                    content: " ",
+                    className: "revert colourButton",
+                    func: () => {
+                        this.applyStyle("colour", "blue");
+                    },
+                    styling: {
+                        backgroundColor: "blue"
+                    }
+                }),
+            ],
+            className: "colours"
+        }),
+
         // we'll do colour and alignment later
     };
 
@@ -334,7 +353,7 @@ class Editor {
                                     this.editorControls.underline,
                                     this.editorControls.subscript,
                                     this.editorControls.superscript,
-                                    this.editorControls.colour,
+                                    this.editorControls.colours,
                                 ]
                             })
                         ],

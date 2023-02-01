@@ -3,7 +3,7 @@ $standardBoxShadowInset: inset 0.2em 0.2em 0.4em #a3a7bd, inset -0.2em -0.2em 0.
 $generalFonts: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 
 // UI elements
-button {
+button:not(.revert) {
     padding: 10px;
     border: transparent;
     font-size: 1em;
@@ -119,6 +119,7 @@ body {
                 vertical-align: baseline;
                 font-size: 1em;
             }
+            
         }
         outline: none;
         // prevent white-space from being removed
@@ -147,7 +148,7 @@ body {
         width: 100%;
 
         // make it take up some of the gap between the top of the page and the editor
-        height: 15vh;
+        // height: 15vh;
 
         // 85% white
         background-color: rgba($color: #ffffff, $alpha: 0.85);
@@ -170,6 +171,29 @@ body {
         .editorToolbarButtons {
             .active {
                 box-shadow: $standardBoxShadowInset;
+            }
+            .colours {
+                // in a grid essentially
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                row-gap: 10px;
+                column-gap: 10px;
+                margin-right: 20px;
+                margin-top: 10px;
+
+                // vertical centring
+                align-items: center;
+
+                .colourButton {
+                    // simple square button, purely a colour, no outline
+                    width: 15px;
+                    height: 15px;
+                    border: none;
+                    outline: none;
+                    cursor: pointer;
+
+                }
             }
         }
 
