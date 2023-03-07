@@ -3,6 +3,7 @@
 import Button from "./elementTypes/Button";
 import MyElement from "./elementTypes/MyElement";
 import { MyElementContent, randomID, State } from "./helpers";
+import Word from "./Word";
 
 // stylings (from SC 10.4)
 const ALL_STYLINGS = [
@@ -41,6 +42,9 @@ class Editor {
 
     // this is the parent element of the editor
     private editorParent: MyElement;
+
+    // array of Word objects
+    public words = [] as Word[];
 
     // any controls the editor will have
     private editorControls: { [key: string]: MyElementContent } = {
@@ -104,12 +108,166 @@ class Editor {
                         backgroundColor: "blue"
                     }
                 }),
+                new Button({
+                    content: " ",
+                    className: "revert colourButton",
+                    func: () => {
+                        this.applyStyle("colour", "green");
+                    },
+                    styling: {
+                        backgroundColor: "green"
+                    }
+                }),
+                new Button({
+                    content: " ",
+                    className: "revert colourButton",
+                    func: () => {
+                        this.applyStyle("colour", "black");
+                    },
+                    styling: {
+                        backgroundColor: "black"
+                    }
+                }),
+
             ],
             className: "colours"
         }),
 
         // we'll do colour and alignment later
     };
+
+    // This displays the words that have been added to the editor
+    private listOfWords = new MyElement({
+        type: "div",
+        className: "listOfWords",
+        content: []
+    });
+
+    private updateWordList = () => {
+        // make listOfWords a list of words so like
+        // * "word"
+        // * Alt + "altCode"
+        // * shortHand
+
+        this.listOfWords.content = this.words.map(word => {
+            return new MyElement({
+                type: "div",
+                content: [
+                    new MyElement({
+                        type: "div",
+                        content: word.word,
+                        className: "wordFull"
+                    }),
+                    new MyElement({
+                        type: "div",
+                        content: `Alt + ${word.altCode}`,
+                        className: "altCode",
+                        styling: {
+                            display: word.altCode ? "" : "none"
+                        }
+                    }),
+                    new MyElement({
+                        type: "div",
+                        content: word.shortHand,
+                        className: "shortHand",
+                        styling: {
+                            display: word.shortHand ? "" : "none"
+                        }
+                    }),
+                    new Button({
+                        content: "Remove",
+                        className: "removeWord",
+                        func: () => {
+                            this.words.splice(this.words.indexOf(word), 1);
+                            this.updateWordList();
+                        }
+                    })
+                ],
+                className: "word"
+            });
+        });
+
+    }
+
+
+    private sidePanel = new MyElement({
+        type: "div",
+
+        // This takes in a word, alt code and shorthand
+        content: [
+            new MyElement({
+                type: "div",
+                content: [
+                    new MyElement({
+                        type: "input",
+                        className: "wordInput",
+                        content: "",
+                        attributes: {
+                            placeholder: "Word"
+                        }
+                    }),
+                    new MyElement({
+                        type: "input",
+                        className: "altCodeInput",
+                        content: "",
+                        attributes: {
+                            placeholder: "Alt Code",
+                            maxlength: "1"
+                        }
+                    }),
+                    new MyElement({
+                        type: "input",
+                        className: "shortHandInput",
+                        content: "",
+                        attributes: {
+                            placeholder: "Short Hand"
+                        }
+                    }),
+                    new Button({
+                        content: "Add",
+                        className: "addWord",
+                        func: () => {
+                            // get the values
+                            var word = this.sidePanel.element.querySelector(".wordInput") as HTMLInputElement;
+                            var altCode = this.sidePanel.element.querySelector(".altCodeInput") as HTMLInputElement;
+                            var shortHand = this.sidePanel.element.querySelector(".shortHandInput") as HTMLInputElement;
+
+                            // Must have a word
+                            if (!word.value) return;
+
+                            // Must have either an alt code or a short hand
+                            if (!shortHand.value && !altCode.value) return;
+
+                            // check if shorthand is already in use
+                            if (this.words.find(word => word.shortHand === shortHand.value.replaceAll(" ", "").toLowerCase())) {
+                                return;
+                            }
+
+                            // check if alt code is already in use
+                            if (this.words.find(word => word.altCode === altCode.value.toUpperCase())) {
+                                return;
+                            }
+
+                            // add the values
+                            this.words.push(new Word(word.value, altCode.value.toUpperCase(), shortHand.value.replaceAll(" ", "").toLowerCase()));
+
+                            // clear the inputs
+                            word.value = "";
+                            altCode.value = "";
+                            shortHand.value = "";
+
+                            this.updateWordList();
+                        }
+                    })
+                ],
+                className: "addWordContainer"
+            }),
+            this.listOfWords
+
+        ],
+        className: "sidePanel"
+    });
+
 
     public main(): void {
         console.log("Editor started");
@@ -118,6 +276,8 @@ class Editor {
     // This implements the EditorElements interface
     // It is used to store the data for the editor
     private _data: EditorElements = {}
+
+
 
     // this will set our data and re-render the editor
     private set data(data: EditorElements) {
@@ -363,6 +523,9 @@ class Editor {
                             }
                         }
                     }),
+
+                    // the side panel
+                    this.sidePanel,
                     // editorMain is the main element
                     this.element
                 ]
@@ -484,7 +647,28 @@ class Editor {
     // this applies a style to the selected text
     private applyStyle(style: string, value?: string) {
 
-        if (style == "newline") {
+        if (style == "word") {
+
+            var sel = window.getSelection();
+            var range = sel.getRangeAt(0);
+            range.collapse(true);
+
+            // get the text node
+            var textNode = range.startContainer;
+            var text = textNode.textContent;
+            var offset = range.startOffset;
+
+            // split the text at the offset, and insert a the word 
+            textNode.textContent = text.substring(0, offset) + value + text.substring(offset);
+            range.setStart(textNode, offset + 1 + value.length);
+
+            // set the selection to the new range
+            range.setEnd(textNode, offset + 1 + value.length);
+            sel.removeAllRanges();
+            sel.addRange(range);
+
+
+        } else if (style == "newline") {
             // this inserts a newline into the text at the caret
 
             // get the selection
@@ -537,6 +721,7 @@ class Editor {
 
                 // remove all classes starting with "colour"
                 span.classList.remove(...Array.from(span.classList).filter(c => c.startsWith("colour")));
+                span.style.color = "";
 
                 if (i === 0) {
                     // if this is the first span, add the new style
@@ -552,31 +737,15 @@ class Editor {
             // delete selection 
             document.getSelection().deleteFromDocument();
 
-
+            var firstContainer = document.getSelection().getRangeAt(0).startContainer;
 
             // insert random ID placeholder using our new ID
-            // document.getSelection().getRangeAt(0).insertNode(document.createTextNode(`{${newID}}`));
+            document.getSelection().getRangeAt(0).insertNode(document.createTextNode(`{${newID}}`));
 
-            // do the above, but check if it's an empty span, if so, delete the span
-            var range2 = document.getSelection().getRangeAt(0);
-
-            // we want to insert text, but if the text is in an empty span, we want to delete the span
-            // so we check if the parent is a span, and if it is, we check if it's empty
-            if (range2.startContainer.parentElement.tagName == "SPAN" && range2.startContainer.parentElement.textContent.length == 0) {
-                // if it is, we delete the span
-
-                // loop through all parents and delete them if they're empty
-                var parent = range2.startContainer.parentElement;
-                while (parent.parentElement.tagName == "SPAN" && parent.parentElement.textContent.length == 0) {
-                    parent = parent.parentElement;
-                }
-
-                parent.outerHTML = `{${newID}}`;
-            } else {
-                // if it isn't, we insert the text
-                range2.insertNode(document.createTextNode(`{${newID}}`));
+            // check if firstContainer is a span
+            if (firstContainer instanceof HTMLSpanElement && firstContainer.textContent.length == `{${newID}}`.length) {
+                firstContainer.innerHTML = `{${newID}}`
             }
-
 
             // do a special recomposition which doesn't re-render the editor
             // this gives us the data, minus the selection
@@ -596,6 +765,7 @@ class Editor {
             selection.removeAllRanges();
             selection.addRange(range);
 
+            // this.recompose();
 
         } else {
             // check style is valid
@@ -677,35 +847,34 @@ class Editor {
                 // delete selection 
                 document.getSelection().deleteFromDocument();
 
-
+                var firstContainer = document.getSelection().getRangeAt(0).startContainer;
+                console.log(document.getSelection().getRangeAt(0))
 
                 // insert random ID placeholder using our new ID
-                // document.getSelection().getRangeAt(0).insertNode(document.createTextNode(`{${newID}}`));
+                document.getSelection().getRangeAt(0).insertNode(document.createTextNode(`{${newID}}`));
 
-                // do the above, but check if it's an empty span, if so, delete the span
-                var range2 = document.getSelection().getRangeAt(0);
+                // check if firstContainer is a span
+                // if (firstContainer instanceof HTMLSpanElement && firstContainer.textContent.length == `{${newID}}`.length) {
+                //     firstContainer.innerHTML = `{${newID}}`
+                // }
 
-                // we want to insert text, but if the text is in an empty span, we want to delete the span
-                // so we check if the parent is a span, and if it is, we check if it's empty
-                if (range2.startContainer.parentElement.tagName == "SPAN" && range2.startContainer.parentElement.textContent.length == 0) {
-                    // if it is, we delete the span
+                // rewrite above but with a loop to check all parents
+                var currentContainer = firstContainer;
 
-                    // loop through all parents and delete them if they're empty
-                    var parent = range2.startContainer.parentElement;
-                    while (parent.parentElement.tagName == "SPAN" && parent.parentElement.textContent.length == 0) {
-                        parent = parent.parentElement;
+                console.log(currentContainer, currentContainer.textContent.length, `{${newID}}`.length)
+
+                while (currentContainer.textContent.length == `{${newID}}`.length) {
+                    if (currentContainer instanceof HTMLSpanElement) {
+                        currentContainer.innerHTML = `{${newID}}`
+                        currentContainer = currentContainer.parentElement;
                     }
-
-                    parent.outerHTML = `{${newID}}`;
-                } else {
-                    // if it isn't, we insert the text
-                    range2.insertNode(document.createTextNode(`{${newID}}`));
+                    console.log(currentContainer, currentContainer.textContent.length, `{${newID}}`.length)
                 }
-
 
                 // do a special recomposition which doesn't re-render the editor
                 // this gives us the data, minus the selection
                 var partialRecomposition = this.recompose(null, true)
+
 
                 // add our new data to the data
                 // this will force a re-render due to my setter
@@ -731,6 +900,15 @@ class Editor {
 
         // make a new variable for the timeout
         var timeout: ReturnType<typeof setTimeout>;
+
+        this.element.onkeyup = (e) => {
+            if (!e.altKey) return;
+
+            // check if alt + altCode of words is pressed
+            // this loops through all the words and checks if the altCode is pressed
+            // if so, the word is inserted
+            this.words.forEach((word) => (e.altKey && e.key.toUpperCase() == word.altCode) && this.applyStyle("word", word.word));
+        }
 
         // this is for handling new input
         this.element.onkeydown = (e) => {
@@ -774,7 +952,6 @@ class Editor {
 
         // we are going to remake the data for the variable this.element using the innerHTML of this.element
 
-        console.log(recomposingElement)
         // get the element spans as a NodeListOf
         var spans = recomposingElement.querySelectorAll("span.element") as NodeListOf<HTMLSpanElement>;
 
@@ -826,6 +1003,11 @@ class Editor {
             // replace any &nbsp; with a space
             text = text.replace(/&nbsp;/g, " ");
 
+            // replace any shortHands with the actual word
+            this.words.forEach((word) => {
+                text = text.replace(word.shortHand, word.word);
+            });
+
             // new variable for the styling array, this will be used to create the new data
             var stylingArray: string[] = [];
 
@@ -856,7 +1038,7 @@ class Editor {
             }
 
             // if there are no styling and it's not the first element, add it to excess elements
-            if (!stylingArray.length && index !== 0) excessElements.push(key);
+            if ((!stylingArray.length || text.length < 0) && index !== 0) excessElements.push(key);
 
             // add the text to the data at the key
             newData[key] = {

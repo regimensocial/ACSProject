@@ -38,7 +38,7 @@ body {
     width: 600px;
     max-width: 100%;
     margin: 0 auto; // horizontal centering
-    
+
     background-color: white;
     // centring the menu
     position: absolute;
@@ -83,7 +83,8 @@ body {
 
 .editorParent {
     .editorMain {
-        .element { // stylings here will be from SC 10.4
+        .element {
+            // stylings here will be from SC 10.4
             font-size: 20px;
             .bold {
                 font-weight: bold;
@@ -119,7 +120,6 @@ body {
                 vertical-align: baseline;
                 font-size: 1em;
             }
-            
         }
         outline: none;
         // prevent white-space from being removed
@@ -133,9 +133,52 @@ body {
         margin-top: 23vh; // gap between the top of the page and the editor
         padding: 40px; // some padding
         box-sizing: border-box; // We need this for padding to work within our given size
-       
+
         // shadow border to stand out
         box-shadow: $standardBoxShadow;
+    }
+
+    .sidePanel {
+        // stick to left side of the page
+        position: fixed;
+        left: 0;
+
+        max-height: 50vh;
+        background-color: white;
+
+        // vertical centring
+        top: 50%;
+        transform: translateY(-50%);
+
+        box-shadow: $standardBoxShadow;
+        font-family: $generalFonts;
+
+        padding: 20px;
+
+        max-width: 80px;
+
+        input {
+            max-width: 100%;
+        }
+
+        // display children vertically
+        .addWordContainer {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .listOfWords {
+            // display chidren vetically
+            display: flex;
+            flex-direction: column;
+
+            .word {
+                box-shadow: $standardBoxShadow;
+            }
+        }
+
     }
 
     // toolbar
@@ -192,10 +235,8 @@ body {
                     border: none;
                     outline: none;
                     cursor: pointer;
-
                 }
             }
         }
-
     }
 }

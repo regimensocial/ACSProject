@@ -33,6 +33,9 @@ export default (props: State) => [
             new Button({
                 className: "button",
                 content: "Flashcards",
+                func: () => {
+                    props.changeMenu("flashcards");
+                }
             }),
             new Button({
                 className: "button",
